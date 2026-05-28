@@ -22,11 +22,36 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "Sync Bot"
 
-      - name: Add upstream
-        run: git remote add upstream https://${{ secrets.FSINO_PAT }}@github.com/farmsupport-innovation/fsino.git
-
-      - name: Fetch + fast-forward + push
+      - name: Sanity check — secret present?
         run: |
-          git fetch upstream admin-frontend
-          git merge --ff-only upstream/admin-frontend
-          git push origin main
+          if [ -z "${{ secrets.FSINO_PAT }}" ]; then
+            echo "::error::FSINO_PAT secret is empty or missing. Go to repo Settings → Secrets and variables → Actions and add it."
+            exit 1
+          fi
+          echo "FSINO_PAT secret is set (length: ${#FSINO_PAT})"
+        env:
+          FSINO_PAT: ${{ secrets.FSINO_PAT }}
+
+      - name: Add upstream
+        env:
+          FSINO_PAT: ${{ secrets.FSINO_PAT }}
+        run: |
+          git remote add upstream "https://x-access-token:${FSINO_PAT}@github.com/farmsupport-innovation/fsino.git"
+          git remote -v
+
+      - name: Fetch upstream
+        run: |
+          git fetch upstream admin-frontend --verbose
+          git log --oneline -3 upstream/admin-frontend
+
+      - name: Fast-forward main, or hard-reset if histories diverged
+        run: |
+          if git merge --ff-only upstream/admin-frontend; then
+            echo "Fast-forwarded main to upstream/admin-frontend."
+          else
+            echo "::warning::main diverged from upstream/admin-frontend — hard-resetting to upstream."
+            git reset --hard upstream/admin-frontend
+          fi
+
+      - name: Push to origin
+        run: git push origin main --force-with-lease

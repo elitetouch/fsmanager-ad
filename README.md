@@ -1,6 +1,6 @@
 # FSManager Admin Portal
 
-> Standalone Next.js super-admin portal for FSManager (FSInnovation /
+> Standalone Next.js super-admin portal for FSManager (Farm Support Innovation /
 > FarmSpeak). Copy this folder into its own GitHub repo, push, and deploy
 > on Vercel — no other configuration required beyond a single environment
 > variable.
@@ -11,7 +11,7 @@
 
 ## What this is
 
-A web app that lets the platform-operating company (FSInnovation) run
+A web app that lets the platform-operating company (Farm Support Innovation) run
 the FSManager SaaS:
 
 - KPI dashboard with daily trends (Recharts)
@@ -240,4 +240,4 @@ the source of truth — never trust the UI check alone.
 
 ## License
 
-Proprietary. © FSInnovation.
+Proprietary. © Farm Support Innovation.

@@ -72,19 +72,19 @@ export default function LoginPage() {
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      {/* Brand panel */}
-      <section className="relative hidden flex-col justify-between bg-gradient-to-br from-[var(--color-brand-primary)] via-[var(--color-brand-primary-dark)] to-[#0f3a1e] p-12 text-white lg:flex">
+      {/* Brand panel — gradient runs from vivid lime through dark forest. */}
+      <section className="relative hidden flex-col justify-between bg-gradient-to-br from-[var(--color-brand-primary)] via-[var(--color-brand-primary-dark)] to-[#062c0d] p-12 text-white lg:flex">
         <div className="flex items-center gap-3">
-          <Logo showWord={false} />
+          <Logo showWord={false} size={48} />
           <div className="leading-tight">
-            <p className="text-base font-semibold tracking-tight">FSManager</p>
+            <p className="text-base font-semibold tracking-tight">Farm Support Innovation</p>
             <p className="text-xs uppercase tracking-[0.18em] opacity-70">Super-admin portal</p>
           </div>
         </div>
 
         <div className="max-w-md">
           <h1 className="text-3xl font-semibold tracking-tight">
-            Operate FSManager with confidence.
+            Operate Farm Support Innovation with confidence.
           </h1>
           <p className="mt-4 text-sm leading-relaxed opacity-85">
             One control surface for every farm, every flock, every token.
@@ -111,7 +111,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-[11px] uppercase tracking-[0.22em] opacity-60">
-          © {new Date().getFullYear()} FSInnovation · v1
+          © {new Date().getFullYear()} Farm Support Innovation · v1
         </p>
       </section>
 

@@ -1,38 +1,40 @@
 /**
  * Single source of truth for the FSManager admin portal brand.
  *
- * Inspired by fsinnovation.net (FarmSpeak): a forest-green agritech palette,
- * Inter sans-serif, modern but grounded. Edit this file to rebrand the entire
- * portal — colours flow into `globals.css` via the @theme block.
+ * Palette derived from the Farm Support Innovation primary mark — two
+ * greens: a vivid lime-leaning green for the wordmark + cloud interior,
+ * and a deep forest green for the cloud outline and "INNOVATION" text.
  *
  * Hex values used here MUST be kept in sync with the CSS variables in
  * `src/app/globals.css`. We mirror them here so that TypeScript code (e.g.
  * chart colours) can read the brand without parsing CSS.
  */
 export const brand = {
-  name: process.env.NEXT_PUBLIC_BRAND_NAME ?? 'FSManager Admin',
+  name: process.env.NEXT_PUBLIC_BRAND_NAME ?? 'Farm Support Innovation',
   tagline: 'Super-admin portal',
-  company: 'FSInnovation',
+  company: 'Farm Support Innovation',
 
   // Primary palette — keep these aligned with @theme tokens in globals.css.
   colors: {
-    primary: '#2d7a3e',       // Forest green (fsinnovation.net)
-    primaryDark: '#1f5a2c',
-    primaryLight: '#5fae6d',
-    accent: '#f59e0b',        // Maize amber — warm complement for charts/alerts
-    surface: '#ffffff',
-    background: '#f7faf8',    // Very pale green-tinted neutral
-    foreground: '#0c1f12',    // Near-black with green undertone
-    muted: '#5f6f64',
-    border: '#e5ebe7',
-    success: '#16a34a',
-    warning: '#d97706',
-    danger: '#dc2626',
-    info: '#0284c7',
+    primary: '#16B12D',       // Vivid lime-forest from "FARM SUPPORT" + cloud interior
+    primaryDark: '#0E6B1A',   // Deep forest from "INNOVATION" + cloud outline
+    primaryLight: '#6DD97D',  // Hand-tuned lighter shade for hovers / chips
+    accent: '#F59E0B',        // Maize amber — warm complement for charts/alerts
+    surface: '#FFFFFF',
+    background: '#F4FAF5',    // Very pale lime-tinted neutral
+    foreground: '#082710',    // Near-black with green undertone (matches "INNOVATION")
+    muted: '#5C6F60',
+    border: '#DDE7E0',
+    success: '#16A34A',
+    warning: '#D97706',
+    danger: '#DC2626',
+    info: '#0284C7',
   },
 
   // Chart palette — used by Recharts. Hand-tuned for colour-blind legibility.
-  chart: ['#2d7a3e', '#f59e0b', '#0284c7', '#9333ea', '#dc2626', '#0d9488'],
+  // First entry is the vivid brand green; second is dark forest so brand
+  // tone leads the trends and bars.
+  chart: ['#16B12D', '#0E6B1A', '#F59E0B', '#0284C7', '#9333EA', '#DC2626'],
 
   // Typography. We use a single Google-fonts-free system stack so the portal
   // boots fast on slow African networks without an external font request.
@@ -41,13 +43,18 @@ export const brand = {
     mono: 'ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Monaco, Consolas, monospace',
   },
 
-  // Logo. Drop your SVG into /public/logo.svg or change the path here.
-  // Until you supply an SVG, the <Logo /> component renders a typographic
-  // wordmark using the colours above.
+  // Logo strategy:
+  //   1. If /public/logo.png exists, the <Logo /> component renders it.
+  //   2. Otherwise it falls back to /public/logo.svg, which we ship as a
+  //      hand-drawn approximation of the Farm Support Innovation mark
+  //      (cloud + animals + signal arc).
+  //   3. The favicon at /public/favicon.svg always renders the simplified
+  //      mark — better legibility at 16-32px than a downscaled PNG.
   logo: {
-    src: '/logo.svg',
-    width: 32,
-    height: 32,
+    raster: '/logo.png',
+    svg: '/logo.svg',
+    width: 36,
+    height: 36,
   },
 } as const;
 

@@ -1,48 +1,64 @@
+'use client';
+
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { brand } from '@/config/brand';
 
 interface Props {
   className?: string;
   showWord?: boolean;
+  /**
+   * Size of the icon mark in pixels (height + width). The wordmark is sized
+   * relative to this. Defaults to the brand's preferred size.
+   */
+  size?: number;
 }
 
 /**
- * Brand mark. Renders an SVG glyph + wordmark.
+ * Brand mark.
  *
- * If you have a real logo, drop it into /public/logo.svg and switch this
- * component to <Image src="/logo.svg" .../> — that's a one-line change.
+ * Render order:
+ *   1. If `/public/logo.png` is present → render the raster (real artwork).
+ *   2. Otherwise fall back to `/public/logo.svg` (hand-drawn approximation
+ *      of the Farm Support Innovation cloud-and-signal mark).
+ *
+ * Both files are shipped; the PNG only kicks in if you drop it into
+ * `/public`. The fallback path runs entirely client-side via an `onError`
+ * handler so there's no flash of the wrong logo, and no build-time check
+ * is required.
  */
-export function Logo({ className, showWord = true }: Props) {
+export function Logo({ className, showWord = true, size = brand.logo.width }: Props) {
+  const [src, setSrc] = useState<string>(brand.logo.raster);
+
   return (
-    <div className={cn('flex items-center gap-2', className)}>
-      <span
-        aria-hidden
-        className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--color-brand-primary)] text-white shadow-sm"
-        style={{ background: brand.colors.primary }}
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden
-        >
-          <path
-            d="M3 14c3-7 9-10 18-10-1 9-5 14-12 16-2 0-4 0-6-1l-2 1V14z"
-            fill="currentColor"
-            opacity="0.95"
-          />
-          <path d="M5 18c4-4 8-6 14-7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </span>
+    <div className={cn('flex items-center gap-2.5', className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={brand.name}
+        width={size}
+        height={size}
+        className="rounded-md object-contain"
+        // If logo.png isn't present, swap to the SVG mark once and let it
+        // stay. We compare strings to avoid an infinite loop in case the
+        // SVG itself ever fails to load.
+        onError={() => {
+          if (src !== brand.logo.svg) setSrc(brand.logo.svg);
+        }}
+      />
       {showWord && (
         <div className="leading-tight">
-          <p className="text-sm font-semibold tracking-tight text-[var(--color-brand-fg)]">
-            {brand.name}
+          <p
+            className="text-sm font-bold tracking-tight"
+            style={{ color: brand.colors.primary }}
+          >
+            FARM SUPPORT
           </p>
-          <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-brand-muted)]">
-            {brand.tagline}
+          <p
+            className="text-[10px] font-semibold tracking-[0.18em]"
+            style={{ color: brand.colors.primaryDark }}
+          >
+            INNOVATION
           </p>
         </div>
       )}

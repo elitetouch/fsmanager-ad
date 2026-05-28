@@ -110,7 +110,7 @@ export function Sidebar({ admin, onNavigate }: Props) {
           <LifeBuoy className="h-3.5 w-3.5" />
           Issues? Open an internal thread in <strong>/support</strong>.
         </p>
-        <p className="mt-2 opacity-70">© {new Date().getFullYear()} FSInnovation</p>
+        <p className="mt-2 opacity-70">© {new Date().getFullYear()} Farm Support Innovation</p>
       </div>
     </aside>
   );

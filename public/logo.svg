@@ -1,11 +1,112 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Replace this placeholder with the real FSInnovation / FarmSpeak logo.
-  The <Logo /> component falls back to a typographic mark if this file is
-  missing, so deleting it does no harm.
+  Farm Support Innovation — admin-portal logo mark.
+
+  Hand-drawn approximation of the official mark: a two-tone cloud with the
+  characteristic gap on the right where the wifi signal sits, plus simple
+  silhouettes of the three farm animals (goat, plant, chicken/rooster).
+
+  Two colours match the brand tokens exactly:
+    #16b12d  vivid cloud-interior green
+    #0e6b1a  deep forest outline / signal green
+
+  Drop a higher-fidelity PNG at /public/logo.png and the <Logo /> component
+  prefers it; this SVG is the fallback + the favicon mark.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#2d7a3e"/>
-  <path d="M5 18c4-9 11-13 22-13-1 11-6 17-14 19-2 0-5 0-7-1l-2 1V18z" fill="#ffffff" opacity="0.96"/>
-  <path d="M7 22c5-5 10-7 17-9" stroke="#2d7a3e" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 256 256"
+  role="img"
+  aria-label="Farm Support Innovation"
+>
+  <!-- ============ CLOUD OUTLINE (dark forest) ============ -->
+  <path
+    d="
+      M 84 44
+      C 60 44 42 62 42 86
+      C 28 92 22 106 22 120
+      C 22 138 36 156 64 156
+      L 100 156
+      L 100 196
+      L 132 174
+      L 168 174
+      C 196 174 218 152 218 124
+      C 218 118 217 112 215 106
+      L 215 106
+      C 215 84 198 66 176 64
+      C 168 50 152 42 134 42
+      C 120 42 108 48 100 56
+      C 96 50 90 44 84 44
+      Z
+    "
+    fill="#0e6b1a"
+  />
+
+  <!-- ============ CLOUD INTERIOR (vivid green) ============ -->
+  <path
+    d="
+      M 90 60
+      C 70 60 56 76 56 94
+      C 44 100 38 110 38 124
+      C 38 138 50 152 70 152
+      L 100 152
+      L 100 174
+      L 122 162
+      L 166 162
+      C 188 162 204 146 204 124
+      C 204 118 203 112 201 108
+      C 198 90 184 78 168 76
+      C 162 64 148 54 132 54
+      C 122 54 112 58 106 64
+      C 102 60 96 60 90 60
+      Z
+    "
+    fill="#16b12d"
+  />
+
+  <!-- ============ SIGNAL ARCS (dark forest, right edge of cloud) ============ -->
+  <g fill="none" stroke="#0e6b1a" stroke-width="11" stroke-linecap="round">
+    <!-- outer arc -->
+    <path d="M 196 64 C 218 78 230 102 230 130" />
+    <!-- middle arc -->
+    <path d="M 196 80 C 212 92 220 110 220 130" />
+  </g>
+  <!-- inner solid dot (signal source) -->
+  <circle cx="196" cy="118" r="13" fill="#0e6b1a" />
+
+  <!-- ============ ANIMALS (dark forest silhouettes on green field) ============ -->
+  <!-- ground line under the trio -->
+  <path d="M 56 134 L 168 134" stroke="#0e6b1a" stroke-width="2.5" stroke-linecap="round" />
+
+  <!-- Goat (left) — body + horn + leg lines -->
+  <g fill="#0e6b1a">
+    <!-- body -->
+    <path d="M 60 124 Q 64 110 76 110 L 90 110 Q 96 110 96 116 L 96 130 L 86 130 L 86 122 L 78 122 L 78 130 L 68 130 L 68 122 Q 62 124 60 124 Z" />
+    <!-- head -->
+    <path d="M 64 108 Q 60 102 64 100 Q 70 100 72 106 Z" />
+    <!-- horn -->
+    <path d="M 65 100 Q 62 94 66 92" stroke="#0e6b1a" stroke-width="2" fill="none" />
+  </g>
+
+  <!-- Plant (center) — stalk + three leaves -->
+  <g fill="#0e6b1a">
+    <rect x="110" y="118" width="3" height="16" rx="1.5" />
+    <path d="M 111 118 Q 100 112 100 100 Q 108 102 113 110 Z" />
+    <path d="M 113 118 Q 124 112 124 100 Q 116 102 111 110 Z" />
+    <path d="M 112 104 Q 108 92 112 84 Q 116 92 112 104 Z" />
+  </g>
+
+  <!-- Chicken/rooster (right) — body + comb + tail + beak -->
+  <g fill="#0e6b1a">
+    <!-- body -->
+    <path d="M 130 130 Q 130 116 144 114 Q 158 114 160 124 L 160 130 L 154 130 L 154 124 L 146 124 L 146 130 Z" />
+    <!-- head -->
+    <path d="M 144 114 Q 142 108 148 106 Q 154 108 154 112 Z" />
+    <!-- comb -->
+    <path d="M 148 106 Q 146 100 150 102 Q 152 98 154 102 Q 156 100 156 104 Z" />
+    <!-- beak -->
+    <path d="M 154 110 L 160 112 L 154 114 Z" />
+    <!-- tail -->
+    <path d="M 130 124 Q 122 116 124 108 Q 132 112 134 122 Z" />
+  </g>
 </svg>

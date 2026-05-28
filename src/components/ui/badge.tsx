@@ -9,7 +9,7 @@ const badgeStyles = cva(
       tone: {
         neutral: 'border-[var(--color-brand-border)] bg-white text-[var(--color-brand-muted)]',
         primary:
-          'border-transparent bg-[color:rgb(45_122_62/0.10)] text-[var(--color-brand-primary-dark)]',
+          'border-transparent bg-[color:rgb(22_177_45/0.10)] text-[var(--color-brand-primary-dark)]',
         accent:
           'border-transparent bg-[color:rgb(245_158_11/0.16)] text-[#92400e]',
         success: 'border-transparent bg-[color:rgb(22_163_74/0.14)] text-[var(--color-brand-success)]',

@@ -106,7 +106,7 @@ export function ManualPurchaseForm({
       className="space-y-4"
     >
       {!compact && (
-        <div className="rounded-lg border border-[var(--color-brand-border)] bg-[color:rgb(45_122_62/0.04)] p-3 text-xs text-[var(--color-brand-muted)]">
+        <div className="rounded-lg border border-[var(--color-brand-border)] bg-[color:rgb(22_177_45/0.04)] p-3 text-xs text-[var(--color-brand-muted)]">
           <p className="flex items-center gap-1.5 font-medium text-[var(--color-brand-fg)]">
             <Banknote className="h-3.5 w-3.5" /> When to use this
           </p>

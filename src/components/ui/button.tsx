@@ -17,7 +17,7 @@ const buttonStyles = cva(
         ghost: 'text-[var(--color-brand-fg)] hover:bg-[var(--color-brand-bg)]',
         danger: 'bg-[var(--color-brand-danger)] text-white hover:opacity-90 shadow-sm',
         outline:
-          'border border-[var(--color-brand-primary)] text-[var(--color-brand-primary)] hover:bg-[color:rgb(45_122_62/0.08)]',
+          'border border-[var(--color-brand-primary)] text-[var(--color-brand-primary)] hover:bg-[color:rgb(22_177_45/0.08)]',
         link: 'text-[var(--color-brand-primary)] underline-offset-4 hover:underline px-0 h-auto',
       },
       size: {

@@ -12,7 +12,7 @@ interface Props {
 }
 
 const ACCENT: Record<NonNullable<Props['accent']>, string> = {
-  primary: 'bg-[color:rgb(45_122_62/0.10)] text-[var(--color-brand-primary-dark)]',
+  primary: 'bg-[color:rgb(22_177_45/0.10)] text-[var(--color-brand-primary-dark)]',
   accent: 'bg-[color:rgb(245_158_11/0.16)] text-[#92400e]',
   info: 'bg-[color:rgb(2_132_199/0.14)] text-[var(--color-brand-info)]',
   success: 'bg-[color:rgb(22_163_74/0.14)] text-[var(--color-brand-success)]',

@@ -7,16 +7,16 @@
  * edit BOTH places — TypeScript reads brand.ts, CSS reads these vars.
  */
 @theme {
-  /* Brand palette */
-  --color-brand-primary: #2d7a3e;
-  --color-brand-primary-dark: #1f5a2c;
-  --color-brand-primary-light: #5fae6d;
+  /* Brand palette — Farm Support Innovation logo greens. */
+  --color-brand-primary: #16b12d;
+  --color-brand-primary-dark: #0e6b1a;
+  --color-brand-primary-light: #6dd97d;
   --color-brand-accent: #f59e0b;
   --color-brand-surface: #ffffff;
-  --color-brand-bg: #f7faf8;
-  --color-brand-fg: #0c1f12;
-  --color-brand-muted: #5f6f64;
-  --color-brand-border: #e5ebe7;
+  --color-brand-bg: #f4faf5;
+  --color-brand-fg: #082710;
+  --color-brand-muted: #5c6f60;
+  --color-brand-border: #dde7e0;
   --color-brand-success: #16a34a;
   --color-brand-warning: #d97706;
   --color-brand-danger: #dc2626;
@@ -51,11 +51,11 @@ body {
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(45, 122, 62, 0.18);
+  background: rgba(22, 177, 45, 0.18);
   border-radius: 9999px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(45, 122, 62, 0.32);
+  background: rgba(22, 177, 45, 0.32);
 }
 
 /* Focus ring: brand green with breathing room */

@@ -10,19 +10,15 @@ export const metadata: Metadata = {
   },
   description: `${brand.tagline} for ${brand.company}.`,
 
-  // Favicon strategy:
-  //   - icon (light mode) → /favicon.svg       (dark-forest backdrop, vivid-green mark)
-  //   - icon (dark  mode) → /favicon-dark.svg  (transparent, vivid-green mark)
+  // Favicon = the official /public/logo.svg, served as-is. The browser
+  // scales it to whatever tab/window size it needs; SVG keeps the brand
+  // mark crisp at every zoom level. No separate favicon files are shipped.
   //
-  // Both files live in /public. To add raster fallbacks later (iOS
-  // home-screen, legacy IE), drop /public/apple-touch-icon.png (180x180)
-  // and /public/favicon.ico and extend this object with `apple` and
-  // `shortcut` fields — no other code change required.
+  // To add raster fallbacks later (iOS home-screen icon, legacy IE), drop
+  // /public/apple-touch-icon.png (180x180) and /public/favicon.ico into
+  // /public and extend this object with `apple` and `shortcut` fields.
   icons: {
-    icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon-dark.svg', type: 'image/svg+xml', media: '(prefers-color-scheme: dark)' },
-    ],
+    icon: { url: '/logo.svg', type: 'image/svg+xml' },
   },
 
   applicationName: brand.name,

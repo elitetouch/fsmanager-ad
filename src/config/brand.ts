@@ -44,21 +44,22 @@ export const brand = {
   },
 
   // Logo strategy:
-  //   1. Default (tone='color'): try /public/logo.png first; on 404 the
-  //      <Logo /> component swaps to /public/logo.svg (the hand-drawn
-  //      Farm Support Innovation mark in vivid + dark-forest greens).
-  //   2. tone='white': render /public/logo-white.svg directly — used on
-  //      dark surfaces (login hero gradient, dark hero sections, dark
-  //      navigation). PNG is skipped here because the official PNG is
-  //      coloured and would not read against a dark backdrop.
-  //   3. Favicons: see /public/favicon.svg (light-mode browser tabs) and
-  //      /public/favicon-dark.svg (dark-mode browser tabs).
+  //   - /public/logo.png — official photographic master. <Logo /> renders
+  //     it first.
+  //   - /public/logo.svg — official vector source. Falls back to this on
+  //     a 404 of the PNG.
+  //
+  // For dark surfaces, <Logo tone="white" /> recolours the same image to
+  // white via a CSS filter chain — the geometry is never redrawn. We do
+  // not ship a separate white-variant file; that would risk drifting out
+  // of sync with the official artwork on every rebrand.
+  //
+  // The favicon registration in src/app/layout.tsx points directly at
+  // /public/logo.svg, so the browser tab always shows the real mark.
   logo: {
     raster: '/logo.png',
     svg: '/logo.svg',
-    svgWhite: '/logo-white.svg',
-    width: 36,
-    height: 36,
+    width: 120,
   },
 } as const;
 

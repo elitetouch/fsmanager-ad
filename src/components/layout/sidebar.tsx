@@ -95,8 +95,13 @@ export function Sidebar({ admin, onNavigate }: Props) {
 
   return (
     <aside className="flex h-full w-full flex-col border-r border-[var(--color-brand-border)] bg-white">
-      <div className="border-b border-[var(--color-brand-border)] p-4">
-        <Logo />
+      <div className="flex items-center justify-center border-b border-[var(--color-brand-border)] p-4">
+        {/*
+          The official logo already contains the "FARM SUPPORT INNOVATION"
+          wordmark — we render it at 160px wide so that text stays
+          readable in the 260px-wide sidebar.
+        */}
+        <Logo size={160} />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-5">

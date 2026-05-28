@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { brand } from '@/config/brand';
 
@@ -8,86 +8,64 @@ type Tone = 'color' | 'white';
 
 interface Props {
   className?: string;
-  showWord?: boolean;
   /**
-   * Size of the icon mark in pixels (width + height). The wordmark scales
-   * relative to this. Defaults to the brand's preferred size.
+   * Pixel size (width). The image is rendered with `height: auto` so the
+   * intrinsic aspect ratio of the source artwork is preserved exactly.
    */
   size?: number;
   /**
-   * `'color'` (default) — render the official two-green mark. Tries
-   *   `/public/logo.png` first; falls back to `/public/logo.svg`.
-   * `'white'` — render the white-on-transparent mark for dark surfaces
-   *   (login hero, dark nav, image overlays). Bypasses the PNG since
-   *   the official PNG is coloured.
+   * `'color'` (default) — render the official artwork untouched.
+   * `'white'` — recolour all opaque pixels to pure white using a CSS
+   *   filter chain. The shape and composition are NOT redrawn; only the
+   *   colour channel is modified, so the official logo geometry stays
+   *   pixel-identical. Use on dark backgrounds (login gradient, dark
+   *   hero panels, photographic overlays).
    */
   tone?: Tone;
 }
 
 /**
- * Brand mark.
+ * Renders the official Farm Support Innovation logo from /public.
  *
- * Used in the sidebar, topbar, login hero, and anywhere else we present
- * the company identity. The wordmark renders "FARM SUPPORT" + "INNOVATION"
- * in two colour stacks that match the official logo; on dark surfaces
- * (`tone="white"`) the wordmark switches to white so it stays legible.
+ * Source priority: `/logo.png` (the photographic master) → `/logo.svg`
+ * (the vector source) via an onError fallback. Both files live in
+ * /public alongside this component; neither is generated or redrawn.
+ *
+ * The wordmark "FARM SUPPORT INNOVATION" is part of the source artwork
+ * itself — so this component renders the image only and does NOT layer
+ * any additional text on top. To keep the wordmark legible, render at
+ * ≥ 100 px wide in dense layouts (sidebar, login hero, marketing).
  */
-export function Logo({
-  className,
-  showWord = true,
-  size = brand.logo.width,
-  tone = 'color',
-}: Props) {
-  // For tone='white' we always use the white SVG (PNG is coloured).
-  // For tone='color' we prefer the PNG (real artwork) and fall back to
-  // the SVG approximation if the PNG is missing.
-  const initialSrc = tone === 'white' ? brand.logo.svgWhite : brand.logo.raster;
-  const [src, setSrc] = useState<string>(initialSrc);
-
-  // Reset when tone toggles (e.g. the Logo gets re-themed by a parent)
-  useEffect(() => {
-    setSrc(tone === 'white' ? brand.logo.svgWhite : brand.logo.raster);
-  }, [tone]);
+export function Logo({ className, size = 120, tone = 'color' }: Props) {
+  const [src, setSrc] = useState<string>('/logo.png');
 
   return (
-    <div className={cn('flex items-center gap-2.5', className)}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={brand.name}
-        width={size}
-        height={size}
-        className="object-contain"
-        // If logo.png is absent in the color path, swap to /logo.svg
-        // once and let it stay. The string compare guards against an
-        // infinite loop in case the SVG itself ever 404s.
-        onError={() => {
-          if (tone === 'color' && src !== brand.logo.svg) {
-            setSrc(brand.logo.svg);
-          }
-        }}
-      />
-      {showWord && (
-        <div className="leading-tight">
-          <p
-            className="text-sm font-bold tracking-tight"
-            style={{ color: tone === 'white' ? '#ffffff' : brand.colors.primary }}
-          >
-            FARM SUPPORT
-          </p>
-          <p
-            className="text-[10px] font-semibold tracking-[0.18em]"
-            style={{
-              color:
-                tone === 'white'
-                  ? 'rgba(255, 255, 255, 0.78)'
-                  : brand.colors.primaryDark,
-            }}
-          >
-            INNOVATION
-          </p>
-        </div>
-      )}
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={brand.name}
+      width={size}
+      // height auto → preserves the source's intrinsic aspect ratio.
+      style={{
+        height: 'auto',
+        // tone='white' chain:
+        //   brightness(0)  → flatten every opaque pixel to black
+        //   invert(1)      → black → white
+        //   Transparent pixels stay transparent.
+        // The result: pixel-identical geometry, recoloured to white.
+        // Drop-shadow is for legibility against busy dark backgrounds.
+        ...(tone === 'white'
+          ? {
+              filter:
+                'brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,0.18))',
+            }
+          : null),
+      }}
+      className={cn('block select-none', className)}
+      onError={() => {
+        if (src !== '/logo.svg') setSrc('/logo.svg');
+      }}
+      draggable={false}
+    />
   );
 }

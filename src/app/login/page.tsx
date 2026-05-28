@@ -74,13 +74,17 @@ export default function LoginPage() {
     <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       {/* Brand panel — gradient runs from vivid lime through dark forest. */}
       <section className="relative hidden flex-col justify-between bg-gradient-to-br from-[var(--color-brand-primary)] via-[var(--color-brand-primary-dark)] to-[#062c0d] p-12 text-white lg:flex">
-        <div className="flex items-center gap-3">
-          {/* White-mark variant so the logo reads against the green gradient. */}
-          <Logo showWord={false} size={52} tone="white" />
-          <div className="leading-tight">
-            <p className="text-base font-semibold tracking-tight">Farm Support Innovation</p>
-            <p className="text-xs uppercase tracking-[0.18em] opacity-70">Super-admin portal</p>
-          </div>
+        {/*
+          Logo (white tone, big enough to read the embedded wordmark) sits
+          at the top. The image already contains "FARM SUPPORT INNOVATION",
+          so we don't layer extra wordmark text next to it — only the
+          "Super-admin portal" sub-line below for context.
+        */}
+        <div>
+          <Logo size={160} tone="white" />
+          <p className="mt-2 text-xs uppercase tracking-[0.22em] opacity-75">
+            Super-admin portal
+          </p>
         </div>
 
         <div className="max-w-md">

@@ -1,0 +1,32 @@
+name: Sync from upstream
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Identify the bot
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "Sync Bot"
+
+      - name: Add upstream
+        run: git remote add upstream https://${{ secrets.FSINO_PAT }}@github.com/farmsupport-innovation/fsino.git
+
+      - name: Fetch + fast-forward + push
+        run: |
+          git fetch upstream admin-frontend
+          git merge --ff-only upstream/admin-frontend
+          git push origin main

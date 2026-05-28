@@ -44,15 +44,19 @@ export const brand = {
   },
 
   // Logo strategy:
-  //   1. If /public/logo.png exists, the <Logo /> component renders it.
-  //   2. Otherwise it falls back to /public/logo.svg, which we ship as a
-  //      hand-drawn approximation of the Farm Support Innovation mark
-  //      (cloud + animals + signal arc).
-  //   3. The favicon at /public/favicon.svg always renders the simplified
-  //      mark — better legibility at 16-32px than a downscaled PNG.
+  //   1. Default (tone='color'): try /public/logo.png first; on 404 the
+  //      <Logo /> component swaps to /public/logo.svg (the hand-drawn
+  //      Farm Support Innovation mark in vivid + dark-forest greens).
+  //   2. tone='white': render /public/logo-white.svg directly — used on
+  //      dark surfaces (login hero gradient, dark hero sections, dark
+  //      navigation). PNG is skipped here because the official PNG is
+  //      coloured and would not read against a dark backdrop.
+  //   3. Favicons: see /public/favicon.svg (light-mode browser tabs) and
+  //      /public/favicon-dark.svg (dark-mode browser tabs).
   logo: {
     raster: '/logo.png',
     svg: '/logo.svg',
+    svgWhite: '/logo-white.svg',
     width: 36,
     height: 36,
   },

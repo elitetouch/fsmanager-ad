@@ -75,7 +75,8 @@ export default function LoginPage() {
       {/* Brand panel — gradient runs from vivid lime through dark forest. */}
       <section className="relative hidden flex-col justify-between bg-gradient-to-br from-[var(--color-brand-primary)] via-[var(--color-brand-primary-dark)] to-[#062c0d] p-12 text-white lg:flex">
         <div className="flex items-center gap-3">
-          <Logo showWord={false} size={48} />
+          {/* White-mark variant so the logo reads against the green gradient. */}
+          <Logo showWord={false} size={52} tone="white" />
           <div className="leading-tight">
             <p className="text-base font-semibold tracking-tight">Farm Support Innovation</p>
             <p className="text-xs uppercase tracking-[0.18em] opacity-70">Super-admin portal</p>

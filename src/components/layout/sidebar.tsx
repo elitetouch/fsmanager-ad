@@ -8,18 +8,23 @@ import {
   Bell,
   Bird,
   BookOpen,
-  CircleDollarSign,
   Coins,
   Compass,
   LayoutDashboard,
   LifeBuoy,
+  Library,
+  Megaphone,
   MessageSquareText,
   Receipt,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
   Tractor,
+  TrendingUp,
   Users,
   UsersRound,
+  Webhook,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminCan, type StoredAdmin } from '@/lib/auth';
@@ -44,7 +49,18 @@ const PRIMARY: Item[] = [
 
 const ANALYTICS: Item[] = [
   { href: '/segmentation', label: 'Segmentation', icon: Compass, perm: 'segmentation.view' },
+  { href: '/analytics/cohort', label: 'Cohort retention', icon: TrendingUp, perm: 'analytics.view' },
   { href: '/audit-logs', label: 'Audit log', icon: Activity, perm: 'audit.view' },
+];
+
+const GROWTH: Item[] = [
+  { href: '/promo-codes', label: 'Promo codes', icon: Sparkles, perm: 'promo.view' },
+  { href: '/broadcasts', label: 'Broadcasts', icon: Megaphone, perm: 'broadcasts.view' },
+];
+
+const SUPPORT_TOOLS: Item[] = [
+  { href: '/kb', label: 'Knowledge base', icon: Library, perm: 'kb.view' },
+  { href: '/macros', label: 'Canned responses', icon: Zap, perm: 'macros.view' },
 ];
 
 const REFERENCE: Item[] = [
@@ -55,12 +71,14 @@ const REFERENCE: Item[] = [
 
 const OPS: Item[] = [
   { href: '/failed-jobs', label: 'Failed jobs', icon: AlertTriangle, perm: 'ops.failed_jobs.view' },
+  { href: '/webhooks', label: 'Webhook log', icon: Webhook, perm: 'webhooks.view' },
   { href: '/notifications', label: 'Notifications', icon: Bell, perm: 'notifications.view' },
 ];
 
 const ADMIN: Item[] = [
   { href: '/admin-users', label: 'Admin users', icon: UsersRound, perm: 'admin_users.view' },
   { href: '/admins', label: 'New admin', icon: ShieldCheck, perm: 'admin_users.create' },
+  { href: '/security/2fa', label: 'My 2FA', icon: ShieldCheck },
 ];
 
 interface Props {
@@ -124,6 +142,8 @@ export function Sidebar({ admin, onNavigate }: Props) {
 
       <nav className="flex-1 overflow-y-auto px-3 py-5">
         {renderGroup('Operations', PRIMARY)}
+        {renderGroup('Growth', GROWTH)}
+        {renderGroup('Support tools', SUPPORT_TOOLS)}
         {renderGroup('Analytics', ANALYTICS)}
         {renderGroup('Reference data', REFERENCE)}
         {renderGroup('Platform ops', OPS)}

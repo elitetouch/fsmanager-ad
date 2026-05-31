@@ -474,6 +474,129 @@ export const endpoints = {
     const qs = q.toString();
     return `${api.defaults.baseURL}/exports/${resource}${qs ? '?' + qs : ''}`;
   },
+
+  // ============================================================
+  // Batch 2 + 3 — impersonate, refund, bulk, webhooks, KB, macros,
+  // promo, broadcast, cohort, 2FA, GDPR
+  // ============================================================
+
+  // Impersonate
+  impersonateStart: (userId: string) =>
+    apiData<{
+      token: string;
+      user: { id: string; name: string; email: string };
+      impersonatedByAdmin: { id: string; name: string; email: string };
+    }>(api.post(`/users/${userId}/impersonate`)),
+  impersonateStop: (userId: string) =>
+    apiData<{ tokensRevoked: number }>(api.post(`/users/${userId}/impersonate/stop`)),
+
+  // Refund + reverify
+  refundPurchase: (id: string, reason: string) =>
+    apiData<{ purchaseId: string; ledgerEntryId: string; clawback: number; partial: boolean }>(
+      api.post(`/tokens/purchases/${id}/refund`, { reason }),
+    ),
+  reverifyPurchase: (id: string) =>
+    apiData<{ purchaseId: string }>(api.post(`/tokens/purchases/${id}/reverify`)),
+
+  // Bulk ops
+  bulkSuspendUsers: (ids: Array<string | number>, reason?: string) =>
+    apiData<{ affected: number }>(api.post('/bulk/users/suspend', { ids, reason })),
+  bulkUnsuspendUsers: (ids: Array<string | number>) =>
+    apiData<{ affected: number }>(api.post('/bulk/users/unsuspend', { ids })),
+  bulkArchiveFarms: (ids: string[]) =>
+    apiData<{ affected: number }>(api.post('/bulk/farms/archive', { ids })),
+  bulkRestoreFarms: (ids: string[]) =>
+    apiData<{ affected: number }>(api.post('/bulk/farms/restore', { ids })),
+
+  // Webhook deliveries
+  listWebhooks: (params: Record<string, string | number | undefined>) =>
+    apiData<{ rows: Array<Record<string, unknown>>; meta: Paginated['meta'] }>(
+      api.get('/webhook-deliveries', { params }),
+    ),
+  showWebhook: (id: string) =>
+    apiData<{ delivery: Record<string, unknown> }>(api.get(`/webhook-deliveries/${id}`)),
+
+  // KB
+  listKbArticles: (params: Record<string, string | number | undefined>) =>
+    apiData<{ articles: Array<Record<string, unknown>>; meta: Paginated['meta'] }>(
+      api.get('/kb/articles', { params }),
+    ),
+  showKbArticle: (id: string) => apiData<{ article: Record<string, unknown> }>(api.get(`/kb/articles/${id}`)),
+  createKbArticle: (payload: Record<string, unknown>) =>
+    apiData<{ article: Record<string, unknown> }>(api.post('/kb/articles', payload)),
+  updateKbArticle: (id: string, payload: Record<string, unknown>) =>
+    apiData<{ article: Record<string, unknown> }>(api.patch(`/kb/articles/${id}`, payload)),
+  deleteKbArticle: (id: string) =>
+    apiData<{ articleId: string }>(api.delete(`/kb/articles/${id}`)),
+
+  // Macros
+  listMacros: (params?: Record<string, string | number | undefined>) =>
+    apiData<{ macros: Array<Record<string, unknown>> }>(
+      api.get('/support/macros', { params: params ?? {} }),
+    ),
+  createMacro: (payload: Record<string, unknown>) =>
+    apiData<{ macro: Record<string, unknown> }>(api.post('/support/macros', payload)),
+  updateMacro: (id: string, payload: Record<string, unknown>) =>
+    apiData<{ macro: Record<string, unknown> }>(api.patch(`/support/macros/${id}`, payload)),
+  deleteMacro: (id: string) =>
+    apiData<{ macroId: string }>(api.delete(`/support/macros/${id}`)),
+
+  // Promo codes
+  listPromoCodes: (params: Record<string, string | number | undefined>) =>
+    apiData<{ codes: Array<Record<string, unknown>>; meta: Paginated['meta'] }>(
+      api.get('/promo-codes', { params }),
+    ),
+  showPromoCode: (id: string) =>
+    apiData<{ code: Record<string, unknown>; redemptions: Array<Record<string, unknown>> }>(
+      api.get(`/promo-codes/${id}`),
+    ),
+  createPromoCode: (payload: Record<string, unknown>) =>
+    apiData<{ code: Record<string, unknown> }>(api.post('/promo-codes', payload)),
+  updatePromoCode: (id: string, payload: Record<string, unknown>) =>
+    apiData<{ code: Record<string, unknown> }>(api.patch(`/promo-codes/${id}`, payload)),
+
+  // Broadcasts
+  listBroadcasts: (params: Record<string, string | number | undefined>) =>
+    apiData<{ campaigns: Array<Record<string, unknown>>; meta: Paginated['meta'] }>(
+      api.get('/broadcasts', { params }),
+    ),
+  showBroadcast: (id: string) =>
+    apiData<{ campaign: Record<string, unknown>; recentRecipients: Array<Record<string, unknown>> }>(
+      api.get(`/broadcasts/${id}`),
+    ),
+  createBroadcast: (payload: Record<string, unknown>) =>
+    apiData<{ campaign: Record<string, unknown> }>(api.post('/broadcasts', payload)),
+  previewBroadcast: (id: string) =>
+    apiData<{ recipientsCount: number }>(api.post(`/broadcasts/${id}/preview`)),
+  dispatchBroadcast: (id: string) =>
+    apiData<{ campaign: Record<string, unknown> }>(api.post(`/broadcasts/${id}/dispatch`)),
+
+  // Cohort
+  cohortRetention: (months = 12) =>
+    apiData<{
+      months: number;
+      cohorts: Array<{
+        cohortMonth: string;
+        signups: number;
+        series: Array<{ monthOffset: number; monthLabel: string; active: number; pct: number }>;
+      }>;
+    }>(api.get('/analytics/cohort-retention', { params: { months } })),
+
+  // 2FA
+  twoFactorSetup: () => apiData<{ secret: string; otpauthUri: string }>(api.post('/2fa/setup')),
+  twoFactorConfirm: (code: string) =>
+    apiData<{ recoveryCodes: string[] }>(api.post('/2fa/confirm', { code })),
+  twoFactorDisable: (code: string) => api.post('/2fa/disable', { code }),
+  twoFactorRegenerate: (code: string) =>
+    apiData<{ recoveryCodes: string[] }>(api.post('/2fa/recovery-codes', { code })),
+
+  // GDPR
+  gdprExport: (userId: string) =>
+    apiData<{ export: Record<string, unknown> }>(api.get(`/users/${userId}/data-export`)),
+  gdprAnonymise: (userId: string, reason: string) =>
+    apiData<{ userId: string }>(
+      api.post(`/users/${userId}/anonymise`, { confirmation: 'ANONYMISE', reason }),
+    ),
 };
 
 // ----------------------------------------------------------------------

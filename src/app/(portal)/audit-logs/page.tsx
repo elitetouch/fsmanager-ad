@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Filter } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
+import { ExportButton } from '@/components/ui/export-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,18 @@ export default function AuditLogsPage() {
       <PageHeader
         title="Audit log"
         description="Append-only feed of every state-changing admin action."
+        actions={
+          <ExportButton
+            resource="audit-logs"
+            filters={{
+              admin_user_id: adminUserId || undefined,
+              action: action || undefined,
+              subject_type: subjectType || undefined,
+              since: since || undefined,
+              until: until || undefined,
+            }}
+          />
+        }
       />
 
       <Card className="mb-4">

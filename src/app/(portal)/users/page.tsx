@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, CheckCircle2, Search, Users as UsersIcon, XCircle } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { ExportButton } from '@/components/ui/export-button';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,12 @@ export default function UsersPage() {
       <PageHeader
         title="Tenant users"
         description="Every signed-up farmer, manager, and staff member across all farms."
+        actions={
+          <ExportButton
+            resource="users"
+            filters={{ q: search || undefined, verified: verified || undefined, country: country || undefined }}
+          />
+        }
       />
 
       <Card className="mb-4">

@@ -10,6 +10,7 @@ import { endpoints } from '@/lib/api';
 import { clearToken, type StoredAdmin } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { initials } from '@/lib/format';
+import { NotificationsBell } from '@/components/layout/notifications-bell';
 
 interface Props {
   admin: StoredAdmin | null;
@@ -53,6 +54,8 @@ export function Topbar({ admin, onOpenSidebar }: Props) {
             {admin.role.replace('_', ' ')}
           </Badge>
         )}
+
+        <NotificationsBell />
 
         <Dropdown.Root>
           <Dropdown.Trigger asChild>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Receipt, Search } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { ExportButton } from '@/components/ui/export-button';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +37,16 @@ export default function AccountsPage() {
 
   return (
     <div>
-      <PageHeader title="Accounts" description="Billing units — each owns one or many farms." />
+      <PageHeader
+        title="Accounts"
+        description="Billing units — each owns one or many farms."
+        actions={
+          <ExportButton
+            resource="accounts"
+            filters={{ q: q || undefined, country: country || undefined }}
+          />
+        }
+      />
 
       <Card className="mb-4">
         <form

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Search, Tractor } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { ExportButton } from '@/components/ui/export-button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,16 @@ export default function FarmsPage() {
 
   return (
     <div>
-      <PageHeader title="Farms" description="Every farm operating on the platform." />
+      <PageHeader
+        title="Farms"
+        description="Every farm operating on the platform."
+        actions={
+          <ExportButton
+            resource="farms"
+            filters={{ q: q || undefined, country_code: country || undefined, farm_type: farmType || undefined, status }}
+          />
+        }
+      />
 
       <Card className="mb-4">
         <form

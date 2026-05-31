@@ -185,6 +185,98 @@ export const PERMISSION_CATALOG: PermissionGroup[] = [
         label: 'Create new admin users',
         description: 'Provision platform staff with a role + optional overrides. Super-admin scope.',
       },
+      {
+        key: 'admin_users.view',
+        label: 'View admin users',
+        description: 'List, search, and inspect platform staff accounts.',
+      },
+      {
+        key: 'admin_users.update',
+        label: 'Edit admin users',
+        description: 'Change name, role, and permission overrides for other admins.',
+      },
+      {
+        key: 'admin_users.suspend',
+        label: 'Suspend admin users',
+        description: 'Revoke an admin’s Sanctum tokens and mark them suspended; or restore.',
+      },
+      {
+        key: 'admin_users.reset_password',
+        label: 'Reset admin password',
+        description: 'Generate a one-time password and burn existing sessions.',
+      },
+      {
+        key: 'admin_users.delete',
+        label: 'Delete admin users',
+        description: 'Soft-archive an admin (status=archived). Audit trail preserved.',
+      },
+    ],
+  },
+  {
+    name: 'Reference data',
+    description: 'Manage breeds, hatcheries, and vaccination protocols.',
+    items: [
+      {
+        key: 'reference.breeds.view',
+        label: 'View breeds catalog',
+        description: 'Browse the global breeds list.',
+      },
+      {
+        key: 'reference.breeds.manage',
+        label: 'Manage breeds',
+        description: 'Create, edit, and deactivate breeds.',
+      },
+      {
+        key: 'reference.hatcheries.view',
+        label: 'View hatcheries catalog',
+        description: 'Browse the global hatcheries list per country.',
+      },
+      {
+        key: 'reference.hatcheries.manage',
+        label: 'Manage hatcheries',
+        description: 'Create, edit, and deactivate hatcheries.',
+      },
+      {
+        key: 'reference.protocols.view',
+        label: 'View vaccination protocols',
+        description: 'Browse country / production-system protocol headers.',
+      },
+      {
+        key: 'reference.protocols.manage',
+        label: 'Manage vaccination protocols',
+        description: 'Create, edit, and deactivate protocol headers.',
+      },
+    ],
+  },
+  {
+    name: 'Operations',
+    description: 'Queue health and exports.',
+    items: [
+      {
+        key: 'ops.failed_jobs.view',
+        label: 'View failed jobs',
+        description: 'Inspect the Laravel failed_jobs table.',
+      },
+      {
+        key: 'ops.failed_jobs.retry',
+        label: 'Retry / delete failed jobs',
+        description: 'Re-queue a failed job for another attempt, or delete it.',
+      },
+      {
+        key: 'ops.failed_jobs.flush',
+        label: 'Flush all failed jobs',
+        description: 'Truncate the failed_jobs table. Audit-logged.',
+      },
+      {
+        key: 'exports.run',
+        label: 'Export CSV',
+        description: 'Stream filtered lists as CSV (users, farms, ledger, audit, etc.).',
+      },
+      {
+        key: 'notifications.view',
+        label: 'View notifications',
+        description: 'Read the bell-icon feed of admin notifications.',
+      },
     ],
   },
 ];
@@ -212,6 +304,8 @@ export const ROLE_DEFAULTS: Record<AdminRole, string[]> = {
     'audit.view',
     'dashboard.view',
     'segmentation.view',
+    'notifications.*',
+    'exports.run',
   ],
   analyst: [
     'users.view',
@@ -222,6 +316,7 @@ export const ROLE_DEFAULTS: Record<AdminRole, string[]> = {
     'segmentation.view',
     'audit.view',
     'exports.run',
+    'notifications.*',
   ],
   read_only: [
     'users.view',
@@ -232,6 +327,7 @@ export const ROLE_DEFAULTS: Record<AdminRole, string[]> = {
     'segmentation.view',
     'support.view',
     'audit.view',
+    'notifications.*',
   ],
 };
 

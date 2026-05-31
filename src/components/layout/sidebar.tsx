@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Activity,
+  AlertTriangle,
+  Bell,
+  Bird,
+  BookOpen,
   CircleDollarSign,
   Coins,
   Compass,
@@ -12,8 +16,10 @@ import {
   MessageSquareText,
   Receipt,
   ShieldCheck,
+  Stethoscope,
   Tractor,
   Users,
+  UsersRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminCan, type StoredAdmin } from '@/lib/auth';
@@ -41,8 +47,20 @@ const ANALYTICS: Item[] = [
   { href: '/audit-logs', label: 'Audit log', icon: Activity, perm: 'audit.view' },
 ];
 
+const REFERENCE: Item[] = [
+  { href: '/reference/breeds', label: 'Breeds', icon: Bird, perm: 'reference.breeds.view' },
+  { href: '/reference/hatcheries', label: 'Hatcheries', icon: BookOpen, perm: 'reference.hatcheries.view' },
+  { href: '/reference/protocols', label: 'Vaccination protocols', icon: Stethoscope, perm: 'reference.protocols.view' },
+];
+
+const OPS: Item[] = [
+  { href: '/failed-jobs', label: 'Failed jobs', icon: AlertTriangle, perm: 'ops.failed_jobs.view' },
+  { href: '/notifications', label: 'Notifications', icon: Bell, perm: 'notifications.view' },
+];
+
 const ADMIN: Item[] = [
-  { href: '/admins', label: 'Admin users', icon: ShieldCheck, perm: 'admin_users.create' },
+  { href: '/admin-users', label: 'Admin users', icon: UsersRound, perm: 'admin_users.view' },
+  { href: '/admins', label: 'New admin', icon: ShieldCheck, perm: 'admin_users.create' },
 ];
 
 interface Props {
@@ -107,6 +125,8 @@ export function Sidebar({ admin, onNavigate }: Props) {
       <nav className="flex-1 overflow-y-auto px-3 py-5">
         {renderGroup('Operations', PRIMARY)}
         {renderGroup('Analytics', ANALYTICS)}
+        {renderGroup('Reference data', REFERENCE)}
+        {renderGroup('Platform ops', OPS)}
         {renderGroup('Administration', ADMIN)}
       </nav>
 

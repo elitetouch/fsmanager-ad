@@ -357,6 +357,123 @@ export const endpoints = {
     DEMO
       ? wait({ rows: fx.demoAuditLogs(), meta: { currentPage: 1, perPage: 50, total: 20, lastPage: 1 } })
       : apiData<{ rows: AuditLogRow[]; meta: Paginated['meta'] }>(api.get('/audit-logs', { params })),
+
+  // ============================================================
+  // Batch 1 — admin lifecycle, failed jobs, notifications,
+  // reference CRUD, CSV exports
+  // ============================================================
+
+  // Admin user lifecycle
+  listAdminUsers: (params: Record<string, string | number | undefined>) =>
+    apiData<{ admins: AdminUser[]; meta: Paginated['meta'] }>(api.get('/admin-users', { params })),
+  showAdminUser: (id: string) =>
+    apiData<{ admin: AdminUser; capabilities: string[] }>(api.get(`/admin-users/${id}`)),
+  updateAdminUser: (
+    id: string,
+    payload: { name?: string; role?: AdminUser['role']; permissions?: Record<string, unknown> | null },
+  ) => apiData<{ admin: AdminUser }>(api.patch(`/admin-users/${id}`, payload)),
+  suspendAdminUser: (id: string) =>
+    apiData<{ adminId: string }>(api.post(`/admin-users/${id}/suspend`)),
+  unsuspendAdminUser: (id: string) =>
+    apiData<{ adminId: string }>(api.post(`/admin-users/${id}/unsuspend`)),
+  resetAdminPassword: (id: string) =>
+    apiData<{ adminId: string; temporaryPassword: string }>(
+      api.post(`/admin-users/${id}/reset-password`),
+    ),
+  deleteAdminUser: (id: string) =>
+    apiData<{ adminId: string }>(api.delete(`/admin-users/${id}`)),
+
+  // Failed jobs
+  listFailedJobs: (params: Record<string, string | number | undefined>) =>
+    apiData<{
+      rows: Array<Record<string, unknown>>;
+      meta: Paginated['meta'];
+      summary: { total: number; last24h: number };
+    }>(api.get('/failed-jobs', { params })),
+  retryFailedJob: (uuid: string) =>
+    apiData<{ uuid: string }>(api.post(`/failed-jobs/${uuid}/retry`)),
+  deleteFailedJob: (uuid: string) =>
+    apiData<{ uuid: string }>(api.delete(`/failed-jobs/${uuid}`)),
+  flushFailedJobs: () =>
+    apiData<{ deleted: number }>(api.post('/failed-jobs/flush')),
+
+  // Notifications (bell icon)
+  listNotifications: (params: Record<string, string | number | undefined>) =>
+    apiData<{
+      notifications: AdminNotification[];
+      meta: Paginated['meta'];
+      unreadCount: number;
+    }>(api.get('/notifications', { params })),
+  notificationsUnreadCount: () =>
+    apiData<{ unreadCount: number }>(api.get('/notifications/unread-count')),
+  markNotificationRead: (id: string) =>
+    apiData<{ id: string }>(api.post(`/notifications/${id}/read`)),
+  markAllNotificationsRead: () =>
+    apiData<{ updated: number }>(api.post('/notifications/read-all')),
+
+  // Reference data — Breeds
+  listBreeds: (params: Record<string, string | number | undefined>) =>
+    apiData<{ breeds: BreedRow[]; meta: Paginated['meta'] }>(
+      api.get('/reference/breeds', { params }),
+    ),
+  showBreed: (id: string) => apiData<{ breed: BreedRow }>(api.get(`/reference/breeds/${id}`)),
+  createBreed: (payload: Partial<BreedRow>) =>
+    apiData<{ breed: BreedRow }>(api.post('/reference/breeds', payload)),
+  updateBreed: (id: string, payload: Partial<BreedRow>) =>
+    apiData<{ breed: BreedRow }>(api.patch(`/reference/breeds/${id}`, payload)),
+  deleteBreed: (id: string) =>
+    apiData<{ breedId: string }>(api.delete(`/reference/breeds/${id}`)),
+
+  // Reference data — Hatcheries
+  listHatcheries: (params: Record<string, string | number | undefined>) =>
+    apiData<{ hatcheries: HatcheryRow[]; meta: Paginated['meta'] }>(
+      api.get('/reference/hatcheries', { params }),
+    ),
+  showHatchery: (id: string) =>
+    apiData<{ hatchery: HatcheryRow }>(api.get(`/reference/hatcheries/${id}`)),
+  createHatchery: (payload: Partial<HatcheryRow>) =>
+    apiData<{ hatchery: HatcheryRow }>(api.post('/reference/hatcheries', payload)),
+  updateHatchery: (id: string, payload: Partial<HatcheryRow>) =>
+    apiData<{ hatchery: HatcheryRow }>(api.patch(`/reference/hatcheries/${id}`, payload)),
+  deleteHatchery: (id: string) =>
+    apiData<{ hatcheryId: string }>(api.delete(`/reference/hatcheries/${id}`)),
+
+  // Reference data — Vaccination protocols
+  listProtocols: (params: Record<string, string | number | undefined>) =>
+    apiData<{ protocols: ProtocolRow[]; meta: Paginated['meta'] }>(
+      api.get('/reference/protocols', { params }),
+    ),
+  showProtocol: (id: string) =>
+    apiData<{ protocol: ProtocolRow; items: Array<Record<string, unknown>> }>(
+      api.get(`/reference/protocols/${id}`),
+    ),
+  createProtocol: (payload: Partial<ProtocolRow>) =>
+    apiData<{ protocol: ProtocolRow }>(api.post('/reference/protocols', payload)),
+  updateProtocol: (id: string, payload: Partial<ProtocolRow>) =>
+    apiData<{ protocol: ProtocolRow }>(api.patch(`/reference/protocols/${id}`, payload)),
+  deleteProtocol: (id: string) =>
+    apiData<{ protocolId: string }>(api.delete(`/reference/protocols/${id}`)),
+
+  // CSV exports — returns the raw URL for an <a href> download. We build
+  // the URL with auth header inline so the browser downloads it without
+  // needing to round-trip via React state.
+  exportUrl: (
+    resource:
+      | 'users'
+      | 'farms'
+      | 'accounts'
+      | 'token-ledger'
+      | 'token-purchases'
+      | 'audit-logs',
+    params: Record<string, string | number | undefined>,
+  ): string => {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== '') q.append(k, String(v));
+    }
+    const qs = q.toString();
+    return `${api.defaults.baseURL}/exports/${resource}${qs ? '?' + qs : ''}`;
+  },
 };
 
 // ----------------------------------------------------------------------
@@ -413,4 +530,55 @@ export type FarmMember = {
   status: string;
   joined_at: string | null;
   last_active_at: string | null;
+};
+
+export type AdminNotification = {
+  id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  linkUrl: string | null;
+  payload: Record<string, unknown> | null;
+  readAt: string | null;
+  createdAt: string | null;
+};
+
+export type BreedRow = {
+  id: string;
+  name: string;
+  slug: string;
+  production_type: 'broiler' | 'layer' | 'dual_purpose';
+  breeder_company?: string | null;
+  country_of_origin?: string | null;
+  description?: string | null;
+  typical_market_age_days?: number | null;
+  typical_mature_weight_g?: number | null;
+  typical_peak_lay_pct?: number | null;
+  typical_age_at_first_egg_days?: number | null;
+  is_active: boolean;
+};
+
+export type HatcheryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  country: string;
+  region?: string | null;
+  city?: string | null;
+  contact_phone?: string | null;
+  contact_email?: string | null;
+  website?: string | null;
+  notes?: string | null;
+  is_active: boolean;
+};
+
+export type ProtocolRow = {
+  id: string;
+  name: string;
+  slug: string;
+  country_code: string;
+  production_type: 'broiler' | 'layer' | 'dual_purpose';
+  production_system?: 'inorganic' | 'organic';
+  description?: string | null;
+  is_active: boolean;
 };

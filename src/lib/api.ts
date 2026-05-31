@@ -97,10 +97,12 @@ import type {
 
 export const endpoints = {
   // Auth
-  login: (email: string, password: string) =>
+  login: (email: string, password: string, code?: string) =>
     DEMO
       ? wait({ admin: fx.demoAdmin, token: 'demo-token' })
-      : apiData<{ admin: AdminUser; token: string }>(api.post('/auth/login', { email, password })),
+      : apiData<{ admin: AdminUser; token: string }>(
+          api.post('/auth/login', code ? { email, password, code } : { email, password }),
+        ),
   me: () =>
     DEMO
       ? wait({ admin: fx.demoAdmin, capabilities: fx.demoCapabilities })

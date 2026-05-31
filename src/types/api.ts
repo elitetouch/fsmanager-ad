@@ -18,7 +18,7 @@ export type AdminUser = {
   name: string;
   email: string;
   role: 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only';
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'archived';
   permissions: Record<string, unknown> | null;
   lastLoginAt: string | null;
   lastLoginIp: string | null;

@@ -6,7 +6,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { AxiosError } from 'axios';
+import { Loader2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/input';
 import { Logo } from '@/components/brand/logo';
@@ -21,9 +22,18 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+/** Detects the backend's "2FA code required" signal from a login failure. */
+function isTwoFactorChallenge(err: unknown): boolean {
+  if (!(err instanceof AxiosError) || err.response?.status !== 422) return false;
+  const errors = (err.response.data as { errors?: Record<string, unknown> } | undefined)?.errors;
+  return Boolean(errors && 'code' in errors);
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [twoFactor, setTwoFactor] = useState(false);
+  const [code, setCode] = useState('');
 
   useEffect(() => {
     // If a token already exists, fast-forward to the dashboard.
@@ -38,7 +48,11 @@ export default function LoginPage() {
   async function onSubmit(values: FormValues) {
     setPending(true);
     try {
-      const { admin, token } = await endpoints.login(values.email, values.password);
+      const { admin, token } = await endpoints.login(
+        values.email,
+        values.password,
+        twoFactor ? code : undefined,
+      );
       writeToken(token);
       // The /auth/me follow-up gives us the role-default capabilities array.
       // We persist both so the sidebar can hide commands the admin can't fire.
@@ -64,10 +78,24 @@ export default function LoginPage() {
       toast.success(`Welcome back, ${admin.name.split(' ')[0]}.`);
       router.replace('/overview');
     } catch (err) {
-      toast.error(apiErrorMessage(err, 'Could not sign you in.'));
+      if (!twoFactor && isTwoFactorChallenge(err)) {
+        // Backend confirmed email/password are valid but TOTP is required.
+        setTwoFactor(true);
+        toast.info('Enter the 6-digit code from your authenticator.');
+      } else if (twoFactor && isTwoFactorChallenge(err)) {
+        toast.error('Invalid 2FA code. Try again.');
+        setCode('');
+      } else {
+        toast.error(apiErrorMessage(err, 'Could not sign you in.'));
+      }
     } finally {
       setPending(false);
     }
+  }
+
+  function backToPassword() {
+    setTwoFactor(false);
+    setCode('');
   }
 
   return (
@@ -127,13 +155,17 @@ export default function LoginPage() {
             <Logo />
           </div>
 
-          <h2 className="text-2xl font-semibold tracking-tight">Sign in to admin</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {twoFactor ? 'Two-factor authentication' : 'Sign in to admin'}
+          </h2>
           <p className="mt-1 text-sm text-[var(--color-brand-muted)]">
-            Use your platform-staff credentials.
+            {twoFactor
+              ? 'Open your authenticator app and enter the 6-digit code, or use a recovery code.'
+              : 'Use your platform-staff credentials.'}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
-            <div className="space-y-1.5">
+            <div className={twoFactor ? 'hidden' : 'space-y-1.5'}>
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -149,7 +181,7 @@ export default function LoginPage() {
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className={twoFactor ? 'hidden' : 'space-y-1.5'}>
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -165,10 +197,36 @@ export default function LoginPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={pending}>
+            {twoFactor && (
+              <div className="space-y-1.5">
+                <Label htmlFor="code">Authenticator code</Label>
+                <Input
+                  id="code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  maxLength={20}
+                  placeholder="123456 or ABCD-EFGH"
+                  className="font-mono tracking-widest"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.trim())}
+                />
+                <p className="flex items-center gap-1.5 text-xs text-[var(--color-brand-muted)]">
+                  <ShieldCheck className="h-3 w-3" /> 6-digit TOTP or one of your recovery codes.
+                </p>
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" size="lg" disabled={pending || (twoFactor && code.length < 6)}>
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Sign in
+              {twoFactor ? 'Verify and continue' : 'Sign in'}
             </Button>
+
+            {twoFactor && (
+              <Button type="button" variant="ghost" className="w-full" onClick={backToPassword}>
+                Back to password
+              </Button>
+            )}
           </form>
 
           <p className="mt-6 text-xs text-[var(--color-brand-muted)]">

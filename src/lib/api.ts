@@ -456,6 +456,24 @@ export const endpoints = {
   deleteProtocol: (id: string) =>
     apiData<{ protocolId: string }>(api.delete(`/reference/protocols/${id}`)),
 
+  // Protocol items — vaccines/treatments inside a protocol
+  createProtocolItem: (protocolId: string, payload: Record<string, unknown>) =>
+    apiData<{ item: Record<string, unknown> }>(
+      api.post(`/reference/protocols/${protocolId}/items`, payload),
+    ),
+  updateProtocolItem: (
+    protocolId: string,
+    itemId: string,
+    payload: Record<string, unknown>,
+  ) =>
+    apiData<{ item: Record<string, unknown> }>(
+      api.patch(`/reference/protocols/${protocolId}/items/${itemId}`, payload),
+    ),
+  deleteProtocolItem: (protocolId: string, itemId: string) =>
+    apiData<{ itemId: string }>(
+      api.delete(`/reference/protocols/${protocolId}/items/${itemId}`),
+    ),
+
   // CSV exports — returns the raw URL for an <a href> download. We build
   // the URL with auth header inline so the browser downloads it without
   // needing to round-trip via React state.

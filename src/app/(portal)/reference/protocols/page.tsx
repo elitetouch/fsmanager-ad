@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, PlusCircle, Search, Stethoscope } from 'lucide-react';
@@ -101,7 +102,14 @@ export default function ProtocolsPage() {
             <TBody>
               {list.data?.protocols.map((p) => (
                 <TR key={p.id}>
-                  <TD className="font-medium">{p.name}</TD>
+                  <TD className="font-medium">
+                    <Link
+                      href={`/reference/protocols/${p.id}`}
+                      className="text-[var(--color-brand-primary)] hover:underline"
+                    >
+                      {p.name}
+                    </Link>
+                  </TD>
                   <TD>{p.country_code}</TD>
                   <TD className="capitalize">{p.production_type.replace('_', ' ')}</TD>
                   <TD className="capitalize">{p.production_system ?? '—'}</TD>

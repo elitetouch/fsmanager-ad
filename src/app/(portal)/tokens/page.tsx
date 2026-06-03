@@ -34,6 +34,8 @@ export default function TokensPage() {
         description="Cross-account balances, ledger, prices, purchases, and manual adjustments."
       />
 
+      <TokenRulesNote />
+
       <Tabs defaultValue="balances">
         <TabsList className="flex flex-wrap">
           <TabsTrigger value="balances">Balances</TabsTrigger>
@@ -64,6 +66,72 @@ export default function TokensPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+/**
+ * Marketing-flavoured note explaining how tokens work in the field.
+ * Sits above the admin tabs so super-admins, support and finance
+ * speak the same language as farmers when answering questions.
+ */
+function TokenRulesNote() {
+  return (
+    <section className="mb-5 overflow-hidden rounded-2xl border border-[var(--color-brand-border)] bg-gradient-to-br from-[var(--color-brand-accent)] to-white p-5">
+      <div className="flex items-start gap-3">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-brand-primary)] text-white">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4Z" />
+          </svg>
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-[var(--color-brand-fg)]">
+            How tokens work — one token, one bird, one tracked cycle
+          </p>
+          <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-brand-muted)]">
+            Tokens are how farmers buy access to flock tracking. Each placed bird debits one token from the matching{' '}
+            <strong className="text-[var(--color-brand-fg)]">token type × tier</strong> bucket, and that single debit keeps the cycle live for the full
+            production window — no daily fees, no recurring charges per record.
+          </p>
+
+          <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+            <li className="rounded-lg border border-[var(--color-brand-border)] bg-white px-3 py-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-brand-primary-deep)]">Broiler</p>
+              <p className="mt-0.5 text-sm font-bold text-[var(--color-brand-fg)]">7 weeks per token</p>
+              <p className="text-[11px] text-[var(--color-brand-muted)]">Full meat-bird cycle window.</p>
+            </li>
+            <li className="rounded-lg border border-[var(--color-brand-border)] bg-white px-3 py-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-brand-primary-deep)]">Layer</p>
+              <p className="mt-0.5 text-sm font-bold text-[var(--color-brand-fg)]">18 months per token</p>
+              <p className="text-[11px] text-[var(--color-brand-muted)]">Covers brood → onset of lay → peak.</p>
+            </li>
+            <li className="rounded-lg border border-[var(--color-brand-border)] bg-white px-3 py-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-brand-primary-deep)]">Dual-purpose</p>
+              <p className="mt-0.5 text-sm font-bold text-[var(--color-brand-fg)]">18 months per token</p>
+              <p className="text-[11px] text-[var(--color-brand-muted)]">Priced and timed on the layer policy.</p>
+            </li>
+          </ul>
+
+          <ul className="mt-4 space-y-1.5 text-[12.5px] leading-relaxed text-[var(--color-brand-fg-soft)]">
+            <li>
+              <strong className="text-[var(--color-brand-fg)]">Pen exclusivity:</strong> a pen can only hold one active flock at a time —
+              new placements are blocked until the current cycle is archived.
+            </li>
+            <li>
+              <strong className="text-[var(--color-brand-fg)]">Auto-archive on expiry:</strong> when the cycle window passes, the flock is
+              archived automatically and its pen is freed for the next placement.
+            </li>
+            <li>
+              <strong className="text-[var(--color-brand-fg)]">Auto-archive at zero birds:</strong> a flock that drops to zero birds
+              (sold, culled, lost) is auto-archived the same day — the token has done its job.
+            </li>
+            <li>
+              <strong className="text-[var(--color-brand-fg)]">Manual archive:</strong> farmers can end a cycle early; the pen is freed
+              immediately and the data stays on file for reports.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }
 

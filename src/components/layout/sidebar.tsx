@@ -10,6 +10,7 @@ import {
   BookOpen,
   Coins,
   Compass,
+  Cpu,
   LayoutDashboard,
   LifeBuoy,
   Library,
@@ -19,6 +20,7 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  Tag,
   Tractor,
   TrendingUp,
   Users,
@@ -67,6 +69,11 @@ const REFERENCE: Item[] = [
   { href: '/reference/breeds', label: 'Breeds', icon: Bird, perm: 'reference.breeds.view' },
   { href: '/reference/hatcheries', label: 'Hatcheries', icon: BookOpen, perm: 'reference.hatcheries.view' },
   { href: '/reference/protocols', label: 'Vaccination protocols', icon: Stethoscope, perm: 'reference.protocols.view' },
+];
+
+const DEVICES: Item[] = [
+  { href: '/devices', label: 'PENKEEP devices', icon: Cpu, perm: 'devices.view' },
+  { href: '/devices/pricing', label: 'Device pricing', icon: Tag, perm: 'devices.pricing' },
 ];
 
 const OPS: Item[] = [
@@ -146,6 +153,7 @@ export function Sidebar({ admin, onNavigate }: Props) {
         {renderGroup('Support tools', SUPPORT_TOOLS)}
         {renderGroup('Analytics', ANALYTICS)}
         {renderGroup('Reference data', REFERENCE)}
+        {renderGroup('IoT fleet', DEVICES)}
         {renderGroup('Platform ops', OPS)}
         {renderGroup('Administration', ADMIN)}
       </nav>

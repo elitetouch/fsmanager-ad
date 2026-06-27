@@ -617,6 +617,73 @@ export const endpoints = {
     apiData<{ userId: string }>(
       api.post(`/users/${userId}/anonymise`, { confirmation: 'ANONYMISE', reason }),
     ),
+
+  /* ────────────────────── PENKEEP devices ────────────────────── */
+  listPenDevices: (params: {
+    q?: string;
+    status?: string;
+    farm_id?: string;
+    page?: number;
+    per_page?: number;
+  }) =>
+    apiData<{
+      devices: Array<Record<string, unknown>>;
+      meta: { total: number; per_page: number; current_page: number; last_page: number };
+    }>(api.get('/pen-devices', { params })),
+
+  allocatePenDevice: (id: string, payload: { farm_id: string; cycle_weeks?: number; installation_fee?: number }) =>
+    apiData<{ device: Record<string, unknown> }>(api.post(`/pen-devices/${id}/allocate`, payload)),
+
+  deactivatePenDevice: (id: string, reason?: string) =>
+    apiData<{ device: Record<string, unknown>; mqtt_published: boolean }>(
+      api.post(`/pen-devices/${id}/deactivate`, { reason }),
+    ),
+
+  resendFlockCmd: (id: string) =>
+    apiData<{ mqtt_published: boolean }>(api.post(`/pen-devices/${id}/resend-flock-cmd`)),
+
+  /* ────────────────────── PENKEEP pricing ────────────────────── */
+  listPenDevicePricing: () =>
+    apiData<{ pricing: Array<{
+      id: string;
+      country_code: string;
+      device_type: string;
+      subscription_price: number;
+      currency: string;
+      cycle_weeks: number;
+      is_active: boolean;
+      updated_at: string;
+    }> }>(api.get('/pen-device-pricing')),
+
+  upsertPenDevicePricing: (payload: {
+    country_code: string;
+    device_type?: string;
+    subscription_price: number;
+    currency: string;
+    cycle_weeks?: number;
+    is_active?: boolean;
+  }) => apiData<{ pricing: Record<string, unknown> }>(api.post('/pen-device-pricing', payload)),
+
+  listPenDeviceInstallationFees: (country_code?: string) =>
+    apiData<{ fees: Array<{
+      id: string;
+      country_code: string;
+      state_name: string;
+      fee: number;
+      currency: string;
+      is_active: boolean;
+    }> }>(api.get('/pen-device-installation-fees', { params: country_code ? { country_code } : undefined })),
+
+  upsertPenDeviceInstallationFee: (payload: {
+    country_code: string;
+    state_name: string;
+    fee: number;
+    currency: string;
+    is_active?: boolean;
+  }) => apiData<{ fee: Record<string, unknown> }>(api.post('/pen-device-installation-fees', payload)),
+
+  deletePenDeviceInstallationFee: (id: string) =>
+    apiData<{ removed: true }>(api.delete(`/pen-device-installation-fees/${id}`)),
 };
 
 // ----------------------------------------------------------------------

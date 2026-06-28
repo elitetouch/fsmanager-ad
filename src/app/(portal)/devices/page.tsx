@@ -658,29 +658,40 @@ function FarmPicker({
               No farms match &ldquo;{debounced}&rdquo;.
             </p>
           ) : (
-            <ul className="max-h-64 overflow-y-auto">
-              {farms.map((f) => (
-                <li key={f.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChange(f.id, f.name);
-                      setOpen(false);
-                      setQuery('');
-                    }}
-                    className="block w-full px-3 py-2 text-left hover:bg-[var(--color-brand-bg)]"
-                  >
-                    <p className="text-[12.5px] font-semibold text-[var(--color-brand-fg)]">
-                      {f.name}
-                    </p>
-                    <p className="text-[11px] text-[var(--color-brand-muted)]">
-                      {[f.country_code, f.state].filter(Boolean).join(' · ') || 'No region'}
-                      <span className="ml-2 font-mono">{f.id.slice(0, 8)}…</span>
-                    </p>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="border-b border-[var(--color-brand-border)] bg-[var(--color-brand-bg)] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-[var(--color-brand-muted)]">
+                Tap a farm to select
+              </p>
+              <ul className="max-h-64 overflow-y-auto">
+                {farms.map((f) => (
+                  <li key={f.id}>
+                    {/* onMouseDown (not onClick) so the selection fires
+                        BEFORE the document-level outside-click listener
+                        closes the dropdown — that listener uses mousedown
+                        too, so without preventDefault here it would
+                        unmount the button before the click event ran. */}
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        onChange(f.id, f.name);
+                        setOpen(false);
+                        setQuery('');
+                      }}
+                      className="block w-full px-3 py-2 text-left hover:bg-[var(--color-brand-accent)]/40"
+                    >
+                      <p className="text-[12.5px] font-semibold text-[var(--color-brand-fg)]">
+                        {f.name}
+                      </p>
+                      <p className="text-[11px] text-[var(--color-brand-muted)]">
+                        {[f.country_code, f.state].filter(Boolean).join(' · ') || 'No region'}
+                        <span className="ml-2 font-mono">{f.id.slice(0, 8)}…</span>
+                      </p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </div>
       )}

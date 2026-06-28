@@ -98,9 +98,28 @@ interface Props {
 export function Sidebar({ admin, onNavigate }: Props) {
   const pathname = usePathname();
 
+  /**
+   * Longest-prefix-match active detection. The previous version simply
+   * checked `pathname.startsWith(item.href + '/')`, which lit up BOTH
+   * `/devices` and `/devices/firmware` when on the firmware page. With
+   * the new check, `/devices` is active for `/devices/<id>` but not for
+   * `/devices/firmware` — because `/devices/firmware` is a longer
+   * sibling prefix that also matches the current pathname.
+   */
+  function isActive(href: string, siblings: string[]): boolean {
+    if (pathname === href) return true;
+    if (!pathname.startsWith(href + '/')) return false;
+    return !siblings.some((other) =>
+      other !== href
+      && other.startsWith(href + '/')
+      && (pathname === other || pathname.startsWith(other + '/'))
+    );
+  }
+
   function renderGroup(title: string, items: Item[]) {
     const visible = items.filter((i) => !i.perm || adminCan(admin, i.perm));
     if (visible.length === 0) return null;
+    const allHrefs = visible.map((i) => i.href);
     return (
       <div className="mb-6">
         <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-muted)]">
@@ -108,7 +127,7 @@ export function Sidebar({ admin, onNavigate }: Props) {
         </p>
         <ul className="space-y-0.5">
           {visible.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + '/');
+            const active = isActive(item.href, allHrefs);
             const Icon = item.icon;
             return (
               <li key={item.href}>

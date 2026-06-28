@@ -642,6 +642,14 @@ export const endpoints = {
       api.post(`/pen-devices/${id}/deactivate`, { reason }),
     ),
 
+  activatePenDevice: (id: string) =>
+    apiData<{ device: Record<string, unknown>; mqtt_published: boolean }>(
+      api.post(`/pen-devices/${id}/activate`),
+    ),
+
+  deletePenDevice: (id: string) =>
+    apiData<{ removed: true }>(api.delete(`/pen-devices/${id}`)),
+
   resendFlockCmd: (id: string) =>
     apiData<{ mqtt_published: boolean }>(api.post(`/pen-devices/${id}/resend-flock-cmd`)),
 

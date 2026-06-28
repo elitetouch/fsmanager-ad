@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, Check, Cpu, Loader2, Plus, Power, RefreshCw, Search, Tractor, X,
+  AlertTriangle, Check, Cpu, Loader2, Plus, Power, PowerOff, RefreshCw, Search, Tractor, Trash2, X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card } from '@/components/ui/card';
@@ -171,6 +171,7 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
   const qc = useQueryClient();
   const [allocating, setAllocating] = useState(false);
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const allocate = useMutation({
     mutationFn: (vars: { farm_id: string; installation_fee?: number }) =>
@@ -193,6 +194,27 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
       setConfirmDeactivate(false);
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not deactivate.'),
+  });
+
+  const activate = useMutation({
+    mutationFn: () => endpoints.activatePenDevice(d.id),
+    onSuccess: (res) => {
+      toast.success(res.mqtt_published
+        ? 'Device reactivated and new_flock_cmd re-sent.'
+        : 'Device reactivated. No active flock to re-arm.');
+      qc.invalidateQueries({ queryKey: ['pen-devices'] });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not activate.'),
+  });
+
+  const remove = useMutation({
+    mutationFn: () => endpoints.deletePenDevice(d.id),
+    onSuccess: () => {
+      toast.success(`Removed ${d.device_id}.`);
+      qc.invalidateQueries({ queryKey: ['pen-devices'] });
+      setConfirmDelete(false);
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not remove device.'),
   });
 
   const resend = useMutation({
@@ -250,6 +272,28 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
                 Deactivate
               </Button>
             )}
+            {d.status === 'deactivated' && (
+              <Button
+                size="sm"
+                onClick={() => activate.mutate()}
+                disabled={activate.isPending}
+              >
+                {activate.isPending
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <PowerOff className="h-3.5 w-3.5" />}
+                Activate
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-rose-700"
+              onClick={() => setConfirmDelete(true)}
+              aria-label="Remove device"
+              title="Remove device"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </TD>
       </TR>
@@ -277,7 +321,61 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
           </TD>
         </TR>
       )}
+
+      {confirmDelete && (
+        <TR className="bg-rose-50/60">
+          <TD colSpan={6}>
+            <DeleteConfirm
+              deviceId={d.device_id}
+              onCancel={() => setConfirmDelete(false)}
+              onConfirm={() => remove.mutate()}
+              submitting={remove.isPending}
+            />
+          </TD>
+        </TR>
+      )}
     </>
+  );
+}
+
+function DeleteConfirm({
+  deviceId, onConfirm, onCancel, submitting,
+}: {
+  deviceId: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  submitting: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-700" />
+        <div>
+          <p className="text-[12.5px] font-bold text-rose-900">
+            Remove device <span className="font-mono">{deviceId}</span>?
+          </p>
+          <p className="mt-0.5 text-[11.5px] text-rose-900">
+            Soft-deletes the row (audit trail preserved). Clears the firmware secret + farm
+            assignment. Re-registering the same MAC later restores the original row with a fresh
+            secret.
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          className="bg-rose-600 hover:bg-rose-700"
+          onClick={onConfirm}
+          disabled={submitting}
+        >
+          {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+          Yes, remove
+        </Button>
+        <Button size="sm" variant="outline" onClick={onCancel} disabled={submitting}>
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 }
 

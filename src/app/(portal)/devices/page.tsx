@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import {
-  AlertTriangle, Check, Cpu, Loader2, Plus, Power, PowerOff, RefreshCw, Search, Tractor, Trash2, X,
+  AlertTriangle, Check, Cpu, Loader2, Plus, Power, PowerOff, Printer, QrCode, RefreshCw, Search, Tractor, Trash2, X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card } from '@/components/ui/card';
@@ -172,6 +173,7 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
   const [allocating, setAllocating] = useState(false);
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showQr, setShowQr] = useState(false);
 
   const allocate = useMutation({
     mutationFn: (vars: { farm_id: string; installation_fee?: number }) =>
@@ -287,6 +289,15 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
             <Button
               size="sm"
               variant="outline"
+              onClick={() => setShowQr(true)}
+              aria-label="QR code sticker"
+              title="QR code sticker"
+            >
+              <QrCode className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               className="text-rose-700"
               onClick={() => setConfirmDelete(true)}
               aria-label="Remove device"
@@ -334,7 +345,126 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
           </TD>
         </TR>
       )}
+
+      {showQr && (
+        <QrStickerDialog
+          deviceId={d.device_id}
+          label={d.label ?? null}
+          onClose={() => setShowQr(false)}
+        />
+      )}
     </>
+  );
+}
+
+/* ─────────────────────────── QR sticker dialog ─────────────────────────── */
+// One sticker per device. The QR encodes the bare device_id, which is
+// what the tenant-app scanner expects (it auto-uppercases and matches
+// /^PENKEEP-[A-F0-9]{12}$/). Keeping it plain text means a non-app QR
+// reader will just show the id as a string — no confusing deep-link
+// behaviour, no privacy leak.
+function QrStickerDialog({
+  deviceId, label, onClose,
+}: {
+  deviceId: string;
+  label: string | null;
+  onClose: () => void;
+}) {
+  const stickerRef = useRef<HTMLDivElement | null>(null);
+
+  // Download as PNG by reading the canvas qrcode.react renders.
+  function downloadPng() {
+    const canvas = stickerRef.current?.querySelector('canvas');
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = `${deviceId}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // Browser print — the print-only stylesheet at the bottom of the
+  // dialog hides everything except the .sticker block so the printout
+  // is just the QR + id on a clean page.
+  function printSticker() {
+    window.print();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm">
+        <Card className="p-5">
+          <div className="mb-4 flex items-center justify-between print:hidden">
+            <h2 className="text-[15px] font-bold">Device QR sticker</h2>
+            <button
+              onClick={onClose}
+              className="rounded p-1 text-[var(--color-brand-muted)] hover:bg-[var(--color-brand-bg)]"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* The printable sticker */}
+          <div ref={stickerRef} className="sticker mx-auto flex flex-col items-center gap-3 rounded-xl border border-dashed border-[var(--color-brand-border)] bg-white p-4">
+            {/* Canvas — used for the PNG download */}
+            <QRCodeCanvas
+              value={deviceId}
+              size={220}
+              level="M"
+              marginSize={2}
+              className="hidden"
+            />
+            {/* SVG — what the user sees on screen + what prints crisply */}
+            <QRCodeSVG
+              value={deviceId}
+              size={220}
+              level="M"
+              marginSize={2}
+              className="block"
+            />
+            <div className="text-center">
+              <p className="font-mono text-[12px] font-bold tracking-tight">{deviceId}</p>
+              {label && (
+                <p className="mt-0.5 text-[10.5px] text-[var(--color-brand-muted)]">{label}</p>
+              )}
+            </div>
+          </div>
+
+          <p className="mt-3 text-[11.5px] text-[var(--color-brand-muted)] print:hidden">
+            Stick this on the back of the device. Tenant app users scan it from the &ldquo;Pair
+            device&rdquo; flow to bind the unit to a pen.
+          </p>
+
+          <div className="mt-4 flex justify-end gap-2 print:hidden">
+            <Button variant="outline" onClick={downloadPng}>
+              <QrCode className="h-3.5 w-3.5" />
+              Download PNG
+            </Button>
+            <Button onClick={printSticker}>
+              <Printer className="h-3.5 w-3.5" />
+              Print
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      <style jsx global>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          .sticker, .sticker * { visibility: visible !important; }
+          .sticker {
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            border: none !important;
+          }
+        }
+      `}</style>
+    </div>
   );
 }
 

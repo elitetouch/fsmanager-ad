@@ -684,6 +684,49 @@ export const endpoints = {
 
   deletePenDeviceInstallationFee: (id: string) =>
     apiData<{ removed: true }>(api.delete(`/pen-device-installation-fees/${id}`)),
+
+  /* ────────────────────── PENKEEP firmware (OTA) ────────────────────── */
+  listFirmwareReleases: (params?: { channel?: string; device_type?: string }) =>
+    apiData<{ releases: FirmwareRelease[] }>(api.get('/firmware', { params })),
+
+  uploadFirmware: (form: FormData) =>
+    apiData<{ release: FirmwareRelease }>(
+      api.post('/firmware', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+    ),
+
+  pushFirmware: (releaseId: string, payload: {
+    target: 'device_ids' | 'farm_id' | 'all';
+    device_ids?: string[];
+    farm_id?: string | null;
+  }) =>
+    apiData<{
+      release_id: string;
+      version: string;
+      attempted: number;
+      pushed: number;
+      failed: number;
+      results: Array<{ device_id: string; device_serial: string; pushed: boolean }>;
+    }>(api.post(`/firmware/${releaseId}/push`, payload)),
+
+  deactivateFirmwareRelease: (releaseId: string) =>
+    apiData<{ release: FirmwareRelease }>(api.post(`/firmware/${releaseId}/deactivate`)),
+};
+
+export type FirmwareRelease = {
+  id: string;
+  device_type: string;
+  version: string;
+  channel: string;
+  file_path: string;
+  file_size: number;
+  sha256: string;
+  release_notes: string | null;
+  is_active: boolean;
+  uploaded_by_admin_id: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 // ----------------------------------------------------------------------

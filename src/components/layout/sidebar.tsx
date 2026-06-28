@@ -11,6 +11,7 @@ import {
   Coins,
   Compass,
   Cpu,
+  Download,
   LayoutDashboard,
   LifeBuoy,
   Library,
@@ -74,6 +75,7 @@ const REFERENCE: Item[] = [
 const DEVICES: Item[] = [
   { href: '/devices', label: 'PENKEEP devices', icon: Cpu, perm: 'devices.view' },
   { href: '/devices/pricing', label: 'Device pricing', icon: Tag, perm: 'devices.pricing' },
+  { href: '/devices/firmware', label: 'Firmware (OTA)', icon: Download, perm: 'devices.firmware' },
 ];
 
 const OPS: Item[] = [

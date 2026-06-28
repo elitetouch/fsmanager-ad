@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
@@ -575,7 +576,12 @@ function FarmPicker({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
+  // Position the portaled dropdown directly under the input. We need
+  // viewport coordinates because the dropdown is rendered in document.body
+  // to escape ancestor overflow:hidden (the Card wrapping the device table).
+  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Debounce search input — typing fast shouldn't hammer the API.
   useEffect(() => {
@@ -583,16 +589,41 @@ function FarmPicker({
     return () => clearTimeout(t);
   }, [query]);
 
-  // Close dropdown on outside click.
+  // Outside-click closes — checks against both the wrapper (the input)
+  // AND the portaled dropdown, since the dropdown is no longer a DOM
+  // descendant of the wrapper.
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideWrapper = wrapperRef.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideWrapper && !insideDropdown) {
         setOpen(false);
       }
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Measure the input's viewport position whenever the dropdown opens
+  // or the user scrolls / resizes. useLayoutEffect avoids a one-frame
+  // flash of the dropdown in the wrong spot.
+  useLayoutEffect(() => {
+    if (!open || !wrapperRef.current) return;
+    function measure() {
+      const el = wrapperRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setDropdownRect({ top: r.bottom + 4, left: r.left, width: r.width });
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
+    };
+  }, [open]);
 
   const { data, isFetching } = useQuery({
     queryKey: ['farm-picker', debounced],
@@ -628,6 +659,69 @@ function FarmPicker({
     );
   }
 
+  // The dropdown itself — split out so we can portal it without
+  // duplicating the JSX.
+  const dropdown = (
+    <div
+      ref={dropdownRef}
+      style={dropdownRect
+        ? { position: 'fixed', top: dropdownRect.top, left: dropdownRect.left, width: dropdownRect.width, zIndex: 60 }
+        : { display: 'none' }
+      }
+      className="overflow-hidden rounded-lg border border-[var(--color-brand-border)] bg-white shadow-lg"
+    >
+      {debounced.length < 2 ? (
+        <p className="p-3 text-[12px] text-[var(--color-brand-muted)]">
+          Type at least 2 characters to search.
+        </p>
+      ) : isFetching ? (
+        <p className="flex items-center gap-2 p-3 text-[12px] text-[var(--color-brand-muted)]">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Searching…
+        </p>
+      ) : farms.length === 0 ? (
+        <p className="p-3 text-[12px] text-[var(--color-brand-muted)]">
+          No farms match &ldquo;{debounced}&rdquo;.
+        </p>
+      ) : (
+        <>
+          <p className="border-b border-[var(--color-brand-border)] bg-[var(--color-brand-bg)] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-[var(--color-brand-muted)]">
+            Tap a farm to select
+          </p>
+          <ul className="max-h-64 overflow-y-auto">
+            {farms.map((f) => (
+              <li key={f.id}>
+                {/* onMouseDown (not onClick) so selection fires BEFORE
+                    the document-level outside-click handler closes the
+                    dropdown — both use mousedown, so without
+                    preventDefault here the button would unmount before
+                    click could fire. */}
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onChange(f.id, f.name);
+                    setOpen(false);
+                    setQuery('');
+                  }}
+                  className="block w-full px-3 py-2 text-left hover:bg-[var(--color-brand-bg)]"
+                >
+                  <p className="text-[12.5px] font-semibold text-[var(--color-brand-fg)]">
+                    {f.name}
+                  </p>
+                  <p className="text-[11px] text-[var(--color-brand-muted)]">
+                    {[f.country_code, f.state].filter(Boolean).join(' · ') || 'No region'}
+                    <span className="ml-2 font-mono">{f.id.slice(0, 8)}…</span>
+                  </p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div ref={wrapperRef} className="relative">
       <div className="relative">
@@ -642,59 +736,7 @@ function FarmPicker({
         />
       </div>
 
-      {open && (
-        <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-[var(--color-brand-border)] bg-white shadow-lg">
-          {debounced.length < 2 ? (
-            <p className="p-3 text-[12px] text-[var(--color-brand-muted)]">
-              Type at least 2 characters to search.
-            </p>
-          ) : isFetching ? (
-            <p className="flex items-center gap-2 p-3 text-[12px] text-[var(--color-brand-muted)]">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Searching…
-            </p>
-          ) : farms.length === 0 ? (
-            <p className="p-3 text-[12px] text-[var(--color-brand-muted)]">
-              No farms match &ldquo;{debounced}&rdquo;.
-            </p>
-          ) : (
-            <>
-              <p className="border-b border-[var(--color-brand-border)] bg-[var(--color-brand-bg)] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-[var(--color-brand-muted)]">
-                Tap a farm to select
-              </p>
-              <ul className="max-h-64 overflow-y-auto">
-                {farms.map((f) => (
-                  <li key={f.id}>
-                    {/* onMouseDown (not onClick) so the selection fires
-                        BEFORE the document-level outside-click listener
-                        closes the dropdown — that listener uses mousedown
-                        too, so without preventDefault here it would
-                        unmount the button before the click event ran. */}
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        onChange(f.id, f.name);
-                        setOpen(false);
-                        setQuery('');
-                      }}
-                      className="block w-full px-3 py-2 text-left hover:bg-[var(--color-brand-accent)]/40"
-                    >
-                      <p className="text-[12.5px] font-semibold text-[var(--color-brand-fg)]">
-                        {f.name}
-                      </p>
-                      <p className="text-[11px] text-[var(--color-brand-muted)]">
-                        {[f.country_code, f.state].filter(Boolean).join(' · ') || 'No region'}
-                        <span className="ml-2 font-mono">{f.id.slice(0, 8)}…</span>
-                      </p>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      )}
+      {open && typeof window !== 'undefined' && createPortal(dropdown, document.body)}
     </div>
   );
 }

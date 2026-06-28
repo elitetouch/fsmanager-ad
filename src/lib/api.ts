@@ -631,6 +631,9 @@ export const endpoints = {
       meta: { total: number; per_page: number; current_page: number; last_page: number };
     }>(api.get('/pen-devices', { params })),
 
+  createPenDevice: (payload: { device_id: string; label?: string; serial_number?: string; firmware_channel?: 'stable' | 'beta' | 'canary' }) =>
+    apiData<{ device: Record<string, unknown>; created: boolean }>(api.post('/pen-devices', payload)),
+
   allocatePenDevice: (id: string, payload: { farm_id: string; cycle_weeks?: number; installation_fee?: number }) =>
     apiData<{ device: Record<string, unknown> }>(api.post(`/pen-devices/${id}/allocate`, payload)),
 

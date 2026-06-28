@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, Check, Cpu, Loader2, Power, RefreshCw, Search, Tractor,
+  AlertTriangle, Check, Cpu, Loader2, Plus, Power, RefreshCw, Search, Tractor, X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card } from '@/components/ui/card';
@@ -38,7 +38,9 @@ export default function DevicesPage() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [registerOpen, setRegisterOpen] = useState(false);
   const perPage = 25;
+  const qc = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['pen-devices', { q, status, page }],
@@ -51,12 +53,18 @@ export default function DevicesPage() {
     <div className="space-y-5">
       <PageHeader
         title="PENKEEP devices"
-        description="Every PENKEEP unit known to the platform — allocate to farms, deactivate when subscriptions lapse, and resend cycle commands to devices that haven't acked."
+        description="Every PENKEEP unit known to the platform — pre-register new units before they ship, allocate to farms, deactivate when subscriptions lapse, and resend cycle commands to devices that haven't acked."
         actions={
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="h-3.5 w-3.5" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-3.5 w-3.5" />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => setRegisterOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              Add device
+            </Button>
+          </div>
         }
       />
 
@@ -128,6 +136,16 @@ export default function DevicesPage() {
           total={data.meta.total}
           perPage={perPage}
           onChange={setPage}
+        />
+      )}
+
+      {registerOpen && (
+        <RegisterDeviceDialog
+          onClose={() => setRegisterOpen(false)}
+          onSuccess={() => {
+            qc.invalidateQueries({ queryKey: ['pen-devices'] });
+            setRegisterOpen(false);
+          }}
         />
       )}
     </div>
@@ -271,6 +289,7 @@ function AllocateForm({
   submitting: boolean;
 }) {
   const [farmId, setFarmId] = useState('');
+  const [farmLabel, setFarmLabel] = useState('');
   const [fee, setFee] = useState('');
   return (
     <form
@@ -286,9 +305,13 @@ function AllocateForm({
     >
       <div className="flex-1">
         <label className="mb-1 block text-[11.5px] font-semibold text-[var(--color-brand-fg-soft)]">
-          Farm UUID
+          Farm
         </label>
-        <Input value={farmId} onChange={(e) => setFarmId(e.target.value)} placeholder="019e8c87-…" />
+        <FarmPicker
+          value={farmId}
+          label={farmLabel}
+          onChange={(id, name) => { setFarmId(id); setFarmLabel(name); }}
+        />
       </div>
       <div className="w-full sm:w-40">
         <label className="mb-1 block text-[11.5px] font-semibold text-[var(--color-brand-fg-soft)]">
@@ -297,7 +320,7 @@ function AllocateForm({
         <Input value={fee} onChange={(e) => setFee(e.target.value)} placeholder="(optional)" inputMode="numeric" />
       </div>
       <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={submitting}>
+        <Button type="submit" size="sm" disabled={submitting || !farmId}>
           {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
           Allocate
         </Button>
@@ -306,6 +329,270 @@ function AllocateForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/* ─────────────────────────── Farm picker ─────────────────────────── */
+// Async-search dropdown for farms. Typing ≥2 chars fires a debounced
+// /admin/farms?q=... call; results render as click-to-select rows
+// showing farm name + country code. Selecting one stores the UUID and
+// shows it as a removable chip so admin can confirm at a glance.
+function FarmPicker({
+  value, label, onChange,
+}: {
+  value: string;
+  label: string;
+  onChange: (id: string, name: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [debounced, setDebounced] = useState('');
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  // Debounce search input — typing fast shouldn't hammer the API.
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Close dropdown on outside click.
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const { data, isFetching } = useQuery({
+    queryKey: ['farm-picker', debounced],
+    queryFn: () => endpoints.listFarms({ q: debounced, per_page: 12 }),
+    enabled: open && debounced.length >= 2,
+    staleTime: 30_000,
+  });
+
+  const farms = (data?.farms ?? []) as Array<{
+    id: string;
+    name: string;
+    country_code?: string | null;
+    state?: string | null;
+  }>;
+
+  // Selected-state chip view.
+  if (value && !open) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-[var(--color-brand-input-border)] bg-white px-3 py-2">
+        <Tractor className="h-3.5 w-3.5 text-[var(--color-brand-muted)]" />
+        <span className="flex-1 text-[12.5px] font-semibold text-[var(--color-brand-fg)]">
+          {label || value}
+        </span>
+        <button
+          type="button"
+          onClick={() => { onChange('', ''); setOpen(true); setQuery(''); }}
+          className="rounded p-1 text-[var(--color-brand-muted)] hover:bg-[var(--color-brand-bg)]"
+          aria-label="Clear"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-brand-muted)]" />
+        <Input
+          autoFocus
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          placeholder="Type farm name to search…"
+          className="pl-9"
+        />
+      </div>
+
+      {open && (
+        <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-[var(--color-brand-border)] bg-white shadow-lg">
+          {debounced.length < 2 ? (
+            <p className="p-3 text-[12px] text-[var(--color-brand-muted)]">
+              Type at least 2 characters to search.
+            </p>
+          ) : isFetching ? (
+            <p className="flex items-center gap-2 p-3 text-[12px] text-[var(--color-brand-muted)]">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Searching…
+            </p>
+          ) : farms.length === 0 ? (
+            <p className="p-3 text-[12px] text-[var(--color-brand-muted)]">
+              No farms match &ldquo;{debounced}&rdquo;.
+            </p>
+          ) : (
+            <ul className="max-h-64 overflow-y-auto">
+              {farms.map((f) => (
+                <li key={f.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(f.id, f.name);
+                      setOpen(false);
+                      setQuery('');
+                    }}
+                    className="block w-full px-3 py-2 text-left hover:bg-[var(--color-brand-bg)]"
+                  >
+                    <p className="text-[12.5px] font-semibold text-[var(--color-brand-fg)]">
+                      {f.name}
+                    </p>
+                    <p className="text-[11px] text-[var(--color-brand-muted)]">
+                      {[f.country_code, f.state].filter(Boolean).join(' · ') || 'No region'}
+                      <span className="ml-2 font-mono">{f.id.slice(0, 8)}…</span>
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────── Register device dialog ─────────────────────────── */
+// Pre-register a new PENKEEP unit in the system before it ever boots.
+// device_id is the only required field — MAC-derived, e.g.
+// PENKEEP-88E48EB5AA8C — and is auto-uppercased so handwritten tags
+// don't fail validation. Optional label + serial help inventory tracking.
+function RegisterDeviceDialog({
+  onClose, onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [deviceId, setDeviceId] = useState('');
+  const [label, setLabel] = useState('');
+  const [serial, setSerial] = useState('');
+  const [channel, setChannel] = useState<'stable' | 'beta' | 'canary'>('stable');
+
+  const create = useMutation({
+    mutationFn: () => endpoints.createPenDevice({
+      device_id: deviceId.trim().toUpperCase(),
+      label: label.trim() || undefined,
+      serial_number: serial.trim() || undefined,
+      firmware_channel: channel,
+    }),
+    onSuccess: (res) => {
+      toast.success(res.created
+        ? `Device ${deviceId.toUpperCase()} registered.`
+        : `Device already existed — record returned.`);
+      onSuccess();
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not register device.'),
+  });
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!/^PENKEEP-[A-F0-9]{12}$/i.test(deviceId.trim())) {
+      toast.error('Device ID must be PENKEEP- followed by 12 hex characters (MAC).');
+      return;
+    }
+    create.mutate();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md">
+        <Card className="p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-[15px] font-bold">Register PENKEEP device</h2>
+            <button
+              onClick={onClose}
+              className="rounded p-1 text-[var(--color-brand-muted)] hover:bg-[var(--color-brand-bg)]"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="mb-4 text-[12px] text-[var(--color-brand-muted)]">
+            Pre-register a unit before it boots. The device ID is on the sticker / printed on the
+            PCB — e.g. <span className="font-mono">PENKEEP-88E48EB5AA8C</span>. The firmware
+            secret is generated automatically.
+          </p>
+
+          <form onSubmit={submit} className="space-y-4">
+            <div>
+              <label className="mb-1 block text-[11.5px] font-semibold text-[var(--color-brand-fg-soft)]">
+                Device ID <span className="text-rose-700">*</span>
+              </label>
+              <Input
+                value={deviceId}
+                onChange={(e) => setDeviceId(e.target.value)}
+                placeholder="PENKEEP-XXXXXXXXXXXX"
+                className="font-mono"
+                autoFocus
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[var(--color-brand-fg-soft)]">
+                  Label
+                </label>
+                <Input
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="(optional)"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[11.5px] font-semibold text-[var(--color-brand-fg-soft)]">
+                  Serial number
+                </label>
+                <Input
+                  value={serial}
+                  onChange={(e) => setSerial(e.target.value)}
+                  placeholder="(optional)"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-[11.5px] font-semibold text-[var(--color-brand-fg-soft)]">
+                Firmware channel
+              </label>
+              <select
+                value={channel}
+                onChange={(e) => setChannel(e.target.value as 'stable' | 'beta' | 'canary')}
+                className="h-10 w-full rounded-lg border border-[var(--color-brand-input-border)] bg-white px-3 text-[13px] text-[var(--color-brand-fg)]"
+              >
+                <option value="stable">stable</option>
+                <option value="beta">beta</option>
+                <option value="canary">canary</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" onClick={onClose} disabled={create.isPending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={create.isPending || !deviceId.trim()}>
+                {create.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Plus className="h-3.5 w-3.5" />
+                )}
+                Register
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+    </div>
   );
 }
 

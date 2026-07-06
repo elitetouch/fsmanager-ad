@@ -300,6 +300,22 @@ export const endpoints = {
     DEMO
       ? wait({ priceId: '01HXY3PEDEMOPRICE' + Date.now() })
       : apiData<{ priceId: string }>(api.post('/tokens/prices', payload)),
+  updateTokenPrice: (
+    id: string,
+    payload: {
+      unit_price_minor?: number;
+      currency?: string;
+      effective_from?: string;
+      is_active?: boolean;
+    },
+  ) =>
+    DEMO
+      ? wait({ priceId: id })
+      : apiData<{ priceId: string }>(api.patch(`/tokens/prices/${id}`, payload)),
+  deleteTokenPrice: (id: string) =>
+    DEMO
+      ? wait({ priceId: id })
+      : apiData<{ priceId: string }>(api.delete(`/tokens/prices/${id}`)),
   tokenPurchases: (params: Record<string, string | number | undefined>) =>
     DEMO
       ? wait({ rows: fx.demoTokenPurchases(), meta: { currentPage: 1, perPage: 50, total: 16, lastPage: 1 } })

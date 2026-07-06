@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { CircleDollarSign, Loader2, PlusCircle, Receipt, Sparkles, Wallet } from 'lucide-react';
+import { CircleDollarSign, Loader2, Pencil, PlusCircle, Power, Receipt, Sparkles, Trash2, Wallet } from 'lucide-react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, Label, Textarea } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { apiErrorMessage, endpoints } from '@/lib/api';
+import type { TokenPrice } from '@/types/api';
 import { fmtDateTime, fmtInt, fmtMinor } from '@/lib/format';
 import { ManualPurchaseForm } from '@/components/forms/manual-purchase-form';
 
@@ -455,6 +456,7 @@ function AdjustPanel() {
 function PricesPanel() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['token-prices'], queryFn: () => endpoints.tokenPrices(false) });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['token-prices'] });
 
   return (
     <div className="space-y-4">
@@ -472,7 +474,7 @@ function PricesPanel() {
                 The current active price for the same (type, tier) is deactivated atomically.
               </DialogDescription>
             </DialogHeader>
-            <NewPriceForm onDone={() => qc.invalidateQueries({ queryKey: ['token-prices'] })} />
+            <NewPriceForm onDone={invalidate} />
           </DialogContent>
         </Dialog>
       </div>
@@ -489,6 +491,7 @@ function PricesPanel() {
               <TH>Unit price</TH>
               <TH>Currency</TH>
               <TH>Effective from</TH>
+              <TH className="text-right">Actions</TH>
             </TR>
           </THead>
           <TBody>
@@ -502,12 +505,197 @@ function PricesPanel() {
                 <TD className="font-medium">{fmtMinor(p.unit_price_minor, p.currency)}</TD>
                 <TD>{p.currency}</TD>
                 <TD className="text-[var(--color-brand-muted)]">{fmtDateTime(p.effective_from ?? null)}</TD>
+                <TD className="text-right">
+                  <PriceRowActions price={p} onDone={invalidate} />
+                </TD>
               </TR>
             ))}
           </TBody>
         </Table>
       )}
     </div>
+  );
+}
+
+/**
+ * Per-row Edit / Activate / Delete controls for a token_prices row.
+ *
+ * Edit opens a dialog with just the mutable fields (unit price, currency,
+ * effective_from) — no way to change (token_type, tier) since that would
+ * clash with the partial-unique index and confuses the audit trail.
+ *
+ * Activate is inline (no dialog) — flipping an inactive row on
+ * deactivates any current holder atomically on the server. Hidden for
+ * rows that are already active.
+ *
+ * Delete asks for confirmation. Historical purchases keep their audit
+ * trail via price_id nullOnDelete on the backend, but there's still no
+ * undo, so we make the operator type-tap explicitly.
+ */
+function PriceRowActions({ price, onDone }: { price: TokenPrice; onDone: () => void }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const activate = useMutation({
+    mutationFn: () => endpoints.updateTokenPrice(price.id, { is_active: true }),
+    onSuccess: () => {
+      toast.success('Price activated.');
+      onDone();
+    },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+
+  const del = useMutation({
+    mutationFn: () => endpoints.deleteTokenPrice(price.id),
+    onSuccess: () => {
+      toast.success('Price deleted.');
+      setConfirmDelete(false);
+      onDone();
+    },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      {!price.is_active && (
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => activate.mutate()}
+          disabled={activate.isPending}
+          title="Activate this price for its (type, tier)"
+        >
+          {activate.isPending
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <Power className="h-3.5 w-3.5" />}
+          Activate
+        </Button>
+      )}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline">
+            <Pencil className="h-3.5 w-3.5" /> Edit
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit token price</DialogTitle>
+            <DialogDescription>
+              Change the amount, currency or effective date. Token type / tier are locked to protect the partial-unique constraint and the audit trail.
+            </DialogDescription>
+          </DialogHeader>
+          <EditPriceForm
+            price={price}
+            onDone={() => {
+              setEditOpen(false);
+              onDone();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline" className="text-rose-700">
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete this price?</DialogTitle>
+            <DialogDescription>
+              Historical purchases that referenced it will keep their audit trail
+              (price_id is set to null), but there&apos;s no undo. Consider deactivating
+              it instead if the row is still referenced anywhere.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+            <Button
+              className="bg-rose-600 hover:bg-rose-700"
+              onClick={() => del.mutate()}
+              disabled={del.isPending}
+            >
+              {del.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              <Trash2 className="h-4 w-4" /> Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function EditPriceForm({ price, onDone }: { price: TokenPrice; onDone: () => void }) {
+  const [unitPriceMinor, setUnitPriceMinor] = useState<number | ''>(price.unit_price_minor);
+  const [currency, setCurrency] = useState(price.currency);
+  const [effectiveFrom, setEffectiveFrom] = useState(
+    price.effective_from ? price.effective_from.slice(0, 10) : '',
+  );
+
+  const m = useMutation({
+    mutationFn: () =>
+      endpoints.updateTokenPrice(price.id, {
+        unit_price_minor: unitPriceMinor === '' ? undefined : Number(unitPriceMinor),
+        currency: currency !== price.currency ? currency : undefined,
+        effective_from: effectiveFrom || undefined,
+      }),
+    onSuccess: () => {
+      toast.success('Price updated.');
+      onDone();
+    },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (unitPriceMinor !== '' && Number(unitPriceMinor) < 1) {
+          toast.error('Unit price must be a positive integer.');
+          return;
+        }
+        m.mutate();
+      }}
+      className="grid gap-3 sm:grid-cols-2"
+    >
+      <div className="sm:col-span-2 rounded-lg border border-[var(--color-brand-border)] bg-[var(--color-brand-surface-soft)] px-3 py-2 text-xs text-[var(--color-brand-muted)]">
+        {price.token_type} · {price.tier} · {price.is_active ? 'currently active' : 'inactive'}
+      </div>
+      <div>
+        <Label>Unit price (minor units)</Label>
+        <Input
+          type="number"
+          min={1}
+          value={unitPriceMinor}
+          onChange={(e) => setUnitPriceMinor(e.target.value === '' ? '' : Number(e.target.value))}
+        />
+        <p className="mt-1 text-[11px] text-[var(--color-brand-muted)]">
+          Kobo / pesewa / cents — e.g. ₦150.00 = 15000
+        </p>
+      </div>
+      <div>
+        <Label>Currency</Label>
+        <Input
+          maxLength={3}
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+        />
+      </div>
+      <div className="sm:col-span-2">
+        <Label>Effective from</Label>
+        <Input
+          type="date"
+          value={effectiveFrom}
+          onChange={(e) => setEffectiveFrom(e.target.value)}
+        />
+      </div>
+      <DialogFooter className="sm:col-span-2">
+        <Button type="submit" disabled={m.isPending}>
+          {m.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          <CircleDollarSign className="h-4 w-4" /> Save changes
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }
 

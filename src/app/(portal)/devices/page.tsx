@@ -164,6 +164,9 @@ type DeviceRow = {
   farm_id: string | null;
   farm: { id: string; name: string } | null;
   pen: { id: string; name: string } | null;
+  // Multi-device pen support — the farmer names the physical spot on
+  // pair ("Front", "Back"). Null on single-device pens.
+  station_label: string | null;
   last_seen_at: string | null;
   billing_ends_at: string | null;
   firmware_version: string | null;
@@ -241,7 +244,16 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
             <span className="inline-flex items-center gap-1 text-[12.5px]">
               <Tractor className="h-3.5 w-3.5 text-[var(--color-brand-muted)]" />
               {d.farm.name}
-              {d.pen && <span className="text-[var(--color-brand-muted)]"> · {d.pen.name}</span>}
+              {d.pen && (
+                <span className="text-[var(--color-brand-muted)]">
+                  {' '}· {d.pen.name}
+                  {d.station_label && (
+                    <span className="ml-1 rounded bg-[var(--color-brand-surface-soft)] px-1.5 py-[1px] text-[10px] font-bold uppercase tracking-wider text-[var(--color-brand-primary-deep)]">
+                      {d.station_label}
+                    </span>
+                  )}
+                </span>
+              )}
             </span>
           ) : (
             <span className="text-[12px] text-[var(--color-brand-muted)]">—</span>

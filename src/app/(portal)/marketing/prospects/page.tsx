@@ -128,7 +128,7 @@ export default function ProspectsPage() {
           <EmptyState
             icon={Users}
             title="No prospects yet"
-            body="Upload a CSV of leads (email, name, phone, farm_name, country) to get started."
+            description="Upload a CSV of leads (email, name, phone, farm_name, country) to get started."
             action={<Button onClick={() => setUploadOpen(true)}><Upload className="h-4 w-4" /> Upload CSV</Button>}
           />
         ) : (
@@ -186,6 +186,7 @@ export default function ProspectsPage() {
                 page={page}
                 perPage={perPage}
                 total={total}
+                lastPage={list.data?.meta.lastPage ?? 1}
                 onChange={setPage}
               />
             </div>

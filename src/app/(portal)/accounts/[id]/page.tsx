@@ -20,7 +20,8 @@ import {
 } from '@/components/ui/dialog';
 import { ManualPurchaseForm } from '@/components/forms/manual-purchase-form';
 import { adminCan, readAdmin } from '@/lib/auth';
-import { endpoints } from '@/lib/api';
+import { endpoints, type AccountRow } from '@/lib/api';
+import type { TokenLedgerRow, TokenPurchase } from '@/types/api';
 import { fmtDate, fmtDateTime, fmtInt, fmtMinor } from '@/lib/format';
 
 export default function AccountDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -36,7 +37,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   });
 
   if (isLoading || !data) return <Skeleton className="h-64" />;
-  const { account, tokenBalances, recentLedger, recentPurchases } = data;
+  const { account, tokenBalances, recentLedger, recentPurchases } = data as {
+    account: AccountRow;
+    tokenBalances: { tokenType: string; tier: string; balance: number }[];
+    recentLedger: TokenLedgerRow[];
+    recentPurchases: TokenPurchase[];
+  };
 
   return (
     <div>

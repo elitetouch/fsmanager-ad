@@ -16,7 +16,7 @@ export type StoredAdmin = {
   id: string;
   name: string;
   email: string;
-  role: 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only';
+  role: 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only' | 'social_media_manager';
   status: string;
   capabilities?: string[];
 };

@@ -70,7 +70,7 @@ export default function TemplatesPage() {
           <EmptyState
             icon={MessageSquareText}
             title="No templates yet"
-            body="Create your first block-based template — heading, paragraph, image, button, and more."
+            description="Create your first block-based template — heading, paragraph, image, button, and more."
             action={<Button onClick={() => setCreating(true)}><Plus className="h-4 w-4" /> New template</Button>}
           />
         </Card>

@@ -39,7 +39,7 @@ export type PermissionGroup = {
 /**
  * Canonical role names as used on the backend.
  */
-export type AdminRole = 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only';
+export type AdminRole = 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only' | 'social_media_manager';
 
 /**
  * Permission key → metadata, grouped by module for display.
@@ -329,6 +329,15 @@ export const ROLE_DEFAULTS: Record<AdminRole, string[]> = {
     'audit.view',
     'notifications.*',
   ],
+  social_media_manager: [
+    'marketing.*',
+    'email_prospects.*',
+    'email_templates.*',
+    'email_campaigns.*',
+    'email_tracking.view',
+    'kb.view',
+    'audit.view',
+  ],
 };
 
 /**
@@ -357,6 +366,7 @@ export const ROLE_LABELS: Record<AdminRole, string> = {
   support: 'Support',
   analyst: 'Analyst',
   read_only: 'Read-only',
+  social_media_manager: 'Social media manager',
 };
 
 /**

@@ -201,6 +201,116 @@ export type SupportMessage = {
   updatedAt: string | null;
 };
 
+/* ────────────────────── Email Marketing ────────────────────── */
+
+export type ProspectStatus = 'new' | 'contacted' | 'bounced' | 'registered' | 'unsubscribed' | 'invalid';
+
+export type EmailProspect = {
+  id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  farmName: string | null;
+  country: string | null;
+  source: string | null;
+  uploadBatchId: string | null;
+  status: ProspectStatus;
+  unsubscribedAt: string | null;
+  registeredUserId: number | null;
+  registeredAt: string | null;
+  createdAt: string | null;
+};
+
+export type EmailBlockType =
+  | 'heading' | 'paragraph' | 'image' | 'button'
+  | 'divider' | 'spacer' | 'columns' | 'html';
+
+export type EmailBlock = {
+  id: string;
+  type: EmailBlockType;
+  props: Record<string, unknown>;
+};
+
+export type EmailTemplateSummary = {
+  id: string;
+  name: string;
+  subject: string;
+  preheader: string | null;
+  blockCount: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type EmailTemplate = EmailTemplateSummary & {
+  blocks: EmailBlock[];
+  previewHtml: string | null;
+};
+
+export type CampaignStatus =
+  | 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled' | 'failed';
+
+export type AudienceFilter = {
+  source: 'prospects' | 'users' | 'both';
+  batch_ids?: string[];
+  countries?: string[];
+  statuses?: ProspectStatus[];
+  exclude_unsubscribed?: boolean;
+  exclude_registered?: boolean;
+};
+
+export type EmailCampaign = {
+  id: string;
+  name: string;
+  templateId: string;
+  templateName: string | null;
+  templateSubject: string | null;
+  fromEmail: string | null;
+  fromName: string | null;
+  replyTo: string | null;
+  audienceFilter: AudienceFilter;
+  status: CampaignStatus;
+  scheduledFor: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  stats: {
+    recipients: number;
+    sent: number;
+    delivered: number;
+    opened: number;
+    clicked: number;
+    bounced: number;
+    unsubscribed: number;
+    failed: number;
+    openRate: number | null;
+    clickRate: number | null;
+  };
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type EmailSendStatus =
+  | 'queued' | 'sent' | 'delivered' | 'opened' | 'clicked'
+  | 'bounced' | 'complained' | 'failed' | 'unsubscribed';
+
+export type EmailSendRow = {
+  id: string;
+  campaignId: string | null;
+  campaignName: string | null;
+  recipientEmail: string;
+  recipientName: string | null;
+  status: EmailSendStatus;
+  sentAt: string | null;
+  firstOpenedAt: string | null;
+  openCount: number;
+  firstClickedAt: string | null;
+  clickCount: number;
+  bouncedAt: string | null;
+  bounceType: string | null;
+  errorMessage: string | null;
+  unsubscribedAt: string | null;
+  createdAt: string | null;
+};
+
 export type AuditLogRow = {
   id: string;
   action: string;

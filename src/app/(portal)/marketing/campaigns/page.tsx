@@ -59,7 +59,7 @@ export default function CampaignsPage() {
           <EmptyState
             icon={Megaphone}
             title="No campaigns yet"
-            body="Draft your first campaign — you'll pick a template, choose which prospects it goes to, and send when ready."
+            description="Draft your first campaign — you'll pick a template, choose which prospects it goes to, and send when ready."
             action={<Button onClick={() => setCreating(true)}><Plus className="h-4 w-4" /> New campaign</Button>}
           />
         </Card>

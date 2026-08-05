@@ -817,7 +817,15 @@ export const endpoints = {
 
   updateEmailCampaign: (
     id: string,
-    payload: Partial<Parameters<typeof endpoints.createEmailCampaign>[0]>,
+    payload: Partial<{
+      name: string;
+      template_id: string;
+      from_email: string | null;
+      from_name: string | null;
+      reply_to: string | null;
+      audience_filter: import('@/types/api').AudienceFilter;
+      scheduled_for: string | null;
+    }>,
   ) =>
     apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.patch(`/email/campaigns/${id}`, payload)),
 

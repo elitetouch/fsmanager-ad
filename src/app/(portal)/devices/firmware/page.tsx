@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { endpoints, type FirmwareRelease } from '@/lib/api';
+import { endpoints, apiErrorMessage, type FirmwareRelease } from '@/lib/api';
 
 /**
  * PENKEEP firmware management — OTA control plane.
@@ -157,7 +157,7 @@ function ReleaseRow({
       qc.invalidateQueries({ queryKey: ['firmware-releases'] });
       setConfirmDeactivate(false);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not deactivate.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not deactivate.')),
   });
 
   return (
@@ -294,7 +294,7 @@ function UploadDialog({
       toast.success(`Uploaded v${res.release.version} · SHA ${res.release.sha256.slice(0, 8)}…`);
       onSuccess();
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Upload failed.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Upload failed.')),
   });
 
   function submit(e: React.FormEvent) {
@@ -457,7 +457,7 @@ function PushDialog({
         toast.error('No device received the push. Are they online?');
       }
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Push failed.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Push failed.')),
   });
 
   function submit(e: React.FormEvent) {

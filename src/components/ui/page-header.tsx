@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 interface Props {
-  title: string;
+  title: React.ReactNode;
   description?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;

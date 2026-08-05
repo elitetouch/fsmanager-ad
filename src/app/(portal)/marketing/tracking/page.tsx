@@ -79,7 +79,7 @@ export default function TrackingPage() {
         {list.isLoading ? (
           <div className="p-4"><Skeleton className="h-40 w-full" /></div>
         ) : rows.length === 0 ? (
-          <EmptyState icon={Activity} title="No sends match" body="Once you run a campaign, every recipient message shows up here." />
+          <EmptyState icon={Activity} title="No sends match" description="Once you run a campaign, every recipient message shows up here." />
         ) : (
           <>
             <Table>
@@ -126,7 +126,7 @@ export default function TrackingPage() {
               </TBody>
             </Table>
             <div className="border-t border-[var(--color-brand-border)] p-3">
-              <Pagination page={page} perPage={perPage} total={list.data?.meta.total ?? 0} onChange={setPage} />
+              <Pagination page={page} perPage={perPage} total={list.data?.meta.total ?? 0} lastPage={list.data?.meta.lastPage ?? 1} onChange={setPage} />
             </div>
           </>
         )}

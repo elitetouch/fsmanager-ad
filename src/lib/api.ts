@@ -739,6 +739,102 @@ export const endpoints = {
 
   deactivateFirmwareRelease: (releaseId: string) =>
     apiData<{ release: FirmwareRelease }>(api.post(`/firmware/${releaseId}/deactivate`)),
+
+  // ───────────── Email Marketing ─────────────
+  listProspects: (params: Record<string, string | number | undefined> = {}) =>
+    apiData<{
+      prospects: import('@/types/api').EmailProspect[];
+      meta: { total: number; perPage: number; currentPage: number; lastPage: number };
+    }>(api.get('/email/prospects', { params })),
+
+  uploadProspects: (file: File, source?: string) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (source) fd.append('source', source);
+    return apiData<{
+      upload_batch_id: string;
+      summary: {
+        inserted: number;
+        skipped_duplicates_in_file: number;
+        invalid_emails: number;
+        total_rows_processed: number;
+      };
+    }>(api.post('/email/prospects/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } }));
+  },
+
+  deleteProspect: (id: string) =>
+    apiData<{ id: string }>(api.delete(`/email/prospects/${id}`)),
+
+  listEmailTemplates: () =>
+    apiData<{ templates: import('@/types/api').EmailTemplateSummary[] }>(api.get('/email/templates')),
+
+  getEmailTemplate: (id: string) =>
+    apiData<{ template: import('@/types/api').EmailTemplate }>(api.get(`/email/templates/${id}`)),
+
+  createEmailTemplate: (payload: {
+    name: string;
+    subject: string;
+    preheader?: string | null;
+    blocks: import('@/types/api').EmailBlock[];
+  }) =>
+    apiData<{ template: import('@/types/api').EmailTemplate }>(api.post('/email/templates', payload)),
+
+  updateEmailTemplate: (id: string, payload: {
+    name?: string;
+    subject?: string;
+    preheader?: string | null;
+    blocks?: import('@/types/api').EmailBlock[];
+  }) =>
+    apiData<{ template: import('@/types/api').EmailTemplate }>(api.patch(`/email/templates/${id}`, payload)),
+
+  deleteEmailTemplate: (id: string) =>
+    apiData<{ id: string }>(api.delete(`/email/templates/${id}`)),
+
+  previewEmailTemplate: (id: string) =>
+    apiData<{ html: string; subject: string; preheader: string | null }>(
+      api.post(`/email/templates/${id}/preview`),
+    ),
+
+  testSendEmailTemplate: (id: string, to: string) =>
+    apiData<{ to: string }>(api.post(`/email/templates/${id}/test-send`, { to })),
+
+  listEmailCampaigns: () =>
+    apiData<{ campaigns: import('@/types/api').EmailCampaign[] }>(api.get('/email/campaigns')),
+
+  getEmailCampaign: (id: string) =>
+    apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.get(`/email/campaigns/${id}`)),
+
+  createEmailCampaign: (payload: {
+    name: string;
+    template_id: string;
+    from_email?: string | null;
+    from_name?: string | null;
+    reply_to?: string | null;
+    audience_filter: import('@/types/api').AudienceFilter;
+    scheduled_for?: string | null;
+  }) =>
+    apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.post('/email/campaigns', payload)),
+
+  updateEmailCampaign: (
+    id: string,
+    payload: Partial<Parameters<typeof endpoints.createEmailCampaign>[0]>,
+  ) =>
+    apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.patch(`/email/campaigns/${id}`, payload)),
+
+  sendEmailCampaign: (id: string) =>
+    apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.post(`/email/campaigns/${id}/send`)),
+
+  cancelEmailCampaign: (id: string) =>
+    apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.post(`/email/campaigns/${id}/cancel`)),
+
+  deleteEmailCampaign: (id: string) =>
+    apiData<{ id: string }>(api.delete(`/email/campaigns/${id}`)),
+
+  listEmailSends: (params: Record<string, string | number | undefined> = {}) =>
+    apiData<{
+      sends: import('@/types/api').EmailSendRow[];
+      meta: { total: number; perPage: number; currentPage: number; lastPage: number };
+    }>(api.get('/email/sends', { params })),
 };
 
 export type FirmwareRelease = {

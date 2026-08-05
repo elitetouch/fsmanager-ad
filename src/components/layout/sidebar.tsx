@@ -61,6 +61,13 @@ const GROWTH: Item[] = [
   { href: '/broadcasts', label: 'Broadcasts', icon: Megaphone, perm: 'broadcasts.view' },
 ];
 
+const MARKETING: Item[] = [
+  { href: '/marketing/prospects', label: 'Prospects', icon: UsersRound, perm: 'email_prospects.view' },
+  { href: '/marketing/templates', label: 'Email templates', icon: MessageSquareText, perm: 'email_templates.view' },
+  { href: '/marketing/campaigns', label: 'Campaigns', icon: Megaphone, perm: 'email_campaigns.view' },
+  { href: '/marketing/tracking', label: 'Email tracking', icon: Activity, perm: 'email_tracking.view' },
+];
+
 const SUPPORT_TOOLS: Item[] = [
   { href: '/kb', label: 'Knowledge base', icon: Library, perm: 'kb.view' },
   { href: '/macros', label: 'Canned responses', icon: Zap, perm: 'macros.view' },
@@ -171,6 +178,7 @@ export function Sidebar({ admin, onNavigate }: Props) {
       <nav className="flex-1 overflow-y-auto px-3 py-5">
         {renderGroup('Operations', PRIMARY)}
         {renderGroup('Growth', GROWTH)}
+        {renderGroup('Email marketing', MARKETING)}
         {renderGroup('Support tools', SUPPORT_TOOLS)}
         {renderGroup('Analytics', ANALYTICS)}
         {renderGroup('Reference data', REFERENCE)}

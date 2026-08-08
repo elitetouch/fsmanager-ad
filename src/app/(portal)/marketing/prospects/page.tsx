@@ -65,6 +65,10 @@ export default function ProspectsPage() {
   // Selection state for bulk-delete. Cleared on filter/page change.
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectAllMatching, setSelectAllMatching] = useState(false);
+  const [confirmBulk, setConfirmBulk] = useState<{ open: boolean; count: number; scope: 'selection' | 'filter' }>({
+    open: false, count: 0, scope: 'selection',
+  });
+  const [confirmSingle, setConfirmSingle] = useState<EmailProspect | null>(null);
 
   const bulk = useMutation({
     mutationFn: (payload: Parameters<typeof endpoints.bulkDeleteProspects>[0]) =>
@@ -193,19 +197,11 @@ export default function ProspectsPage() {
               size="sm"
               className="text-rose-600 hover:bg-rose-50"
               disabled={bulk.isPending}
-              onClick={() => {
-                const count = selectAllMatching ? total : selected.size;
-                if (! confirm(`Remove ${count} prospect(s)? This is soft-delete — rows can be restored in the DB but not the UI.`)) return;
-                if (selectAllMatching) {
-                  bulk.mutate({
-                    all_matching_filter: true,
-                    ...(status ? { status } : {}),
-                    ...(search.trim() ? { q: search.trim() } : {}),
-                  });
-                } else {
-                  bulk.mutate({ ids: Array.from(selected) });
-                }
-              }}
+              onClick={() => setConfirmBulk({
+                open: true,
+                count: selectAllMatching ? total : selected.size,
+                scope: selectAllMatching ? 'filter' : 'selection',
+              })}
             >
               {bulk.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
               Delete {selectAllMatching ? fmtInt(total) : fmtInt(selected.size)}
@@ -276,11 +272,7 @@ export default function ProspectsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          if (confirm(`Remove ${p.email}? This is reversible via the DB but not the UI.`)) {
-                            remove.mutate(p.id);
-                          }
-                        }}
+                        onClick={() => setConfirmSingle(p)}
                         disabled={remove.isPending}
                         className="text-rose-600 hover:bg-rose-50"
                       >
@@ -305,7 +297,91 @@ export default function ProspectsPage() {
       </Card>
 
       <UploadDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
+
+      <ConfirmDeleteDialog
+        open={confirmBulk.open}
+        pending={bulk.isPending}
+        title={confirmBulk.count === 1 ? 'Delete 1 prospect?' : `Delete ${fmtInt(confirmBulk.count)} prospects?`}
+        body={
+          confirmBulk.scope === 'filter'
+            ? `Every prospect matching your current filter (${fmtInt(confirmBulk.count)} rows) will be removed from the ledger. Rows are soft-deleted — a database restore can recover them, but there's no undo in this UI.`
+            : `The ${fmtInt(confirmBulk.count)} selected prospect${confirmBulk.count === 1 ? '' : 's'} will be removed from the ledger. Rows are soft-deleted — a database restore can recover them, but there's no undo in this UI.`
+        }
+        confirmLabel={`Yes, delete ${fmtInt(confirmBulk.count)}`}
+        onCancel={() => setConfirmBulk({ ...confirmBulk, open: false })}
+        onConfirm={() => {
+          if (confirmBulk.scope === 'filter') {
+            bulk.mutate({
+              all_matching_filter: true,
+              ...(status ? { status } : {}),
+              ...(search.trim() ? { q: search.trim() } : {}),
+            });
+          } else {
+            bulk.mutate({ ids: Array.from(selected) });
+          }
+          setConfirmBulk({ ...confirmBulk, open: false });
+        }}
+      />
+
+      <ConfirmDeleteDialog
+        open={confirmSingle !== null}
+        pending={remove.isPending}
+        title="Delete this prospect?"
+        body={
+          confirmSingle
+            ? `${confirmSingle.email}${confirmSingle.name ? ` (${confirmSingle.name})` : ''} will be removed from the ledger. Soft-deleted — a DB restore recovers the row, but there's no undo here.`
+            : ''
+        }
+        confirmLabel="Yes, delete"
+        onCancel={() => setConfirmSingle(null)}
+        onConfirm={() => {
+          if (confirmSingle) remove.mutate(confirmSingle.id);
+          setConfirmSingle(null);
+        }}
+      />
     </div>
+  );
+}
+
+/* ─────────────────────────── ConfirmDeleteDialog ─────────────────────────── */
+
+function ConfirmDeleteDialog({
+  open, pending, title, body, confirmLabel, onCancel, onConfirm,
+}: {
+  open: boolean;
+  pending: boolean;
+  title: string;
+  body: string;
+  confirmLabel: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && !pending && onCancel()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-rose-50">
+            <Trash2 className="h-5 w-5 text-rose-600" />
+          </div>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="pt-1 leading-relaxed">{body}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mt-2">
+          <Button variant="ghost" onClick={onCancel} disabled={pending}>
+            Cancel
+          </Button>
+          <Button
+            className="bg-rose-600 text-white hover:bg-rose-700"
+            onClick={onConfirm}
+            disabled={pending}
+          >
+            {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Trash2 className="h-4 w-4" />
+            {confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

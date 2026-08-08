@@ -765,6 +765,16 @@ export const endpoints = {
   deleteProspect: (id: string) =>
     apiData<{ id: string }>(api.delete(`/email/prospects/${id}`)),
 
+  bulkDeleteProspects: (payload: {
+    ids?: string[];
+    all_matching_filter?: boolean;
+    status?: string;
+    q?: string;
+    upload_batch_id?: string;
+    country?: string;
+  }) =>
+    apiData<{ deleted: number }>(api.post('/email/prospects/bulk-delete', payload)),
+
   listEmailTemplates: () =>
     apiData<{ templates: import('@/types/api').EmailTemplateSummary[] }>(api.get('/email/templates')),
 

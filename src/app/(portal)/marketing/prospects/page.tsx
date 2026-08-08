@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  Loader2, Upload, Trash2, Users, MailCheck, MailX, MailWarning, Search, FileDown,
+  Loader2, Upload, Trash2, Users, MailCheck, MailX, MailWarning, Search, FileDown, CheckSquare, X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card } from '@/components/ui/card';
@@ -62,8 +62,48 @@ export default function ProspectsPage() {
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
 
+  // Selection state for bulk-delete. Cleared on filter/page change.
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectAllMatching, setSelectAllMatching] = useState(false);
+
+  const bulk = useMutation({
+    mutationFn: (payload: Parameters<typeof endpoints.bulkDeleteProspects>[0]) =>
+      endpoints.bulkDeleteProspects(payload),
+    onSuccess: (r) => {
+      toast.success(`${fmtInt(r.deleted)} prospect(s) removed.`);
+      setSelected(new Set());
+      setSelectAllMatching(false);
+      qc.invalidateQueries({ queryKey: ['prospects'] });
+    },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+
   const rows: EmailProspect[] = list.data?.prospects ?? [];
   const total = list.data?.meta.total ?? 0;
+
+  const allOnPageSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+  const someOnPageSelected = rows.some((r) => selected.has(r.id));
+
+  function togglePageSelection() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) {
+        rows.forEach((r) => next.delete(r.id));
+      } else {
+        rows.forEach((r) => next.add(r.id));
+      }
+      return next;
+    });
+    setSelectAllMatching(false);
+  }
+  function toggleRow(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+    setSelectAllMatching(false);
+  }
 
   const statusCounts = useMemo(() => {
     const c: Record<ProspectStatus, number> = { new: 0, contacted: 0, bounced: 0, registered: 0, unsubscribed: 0, invalid: 0 };
@@ -122,6 +162,57 @@ export default function ProspectsPage() {
           </div>
         </div>
 
+        {(selected.size > 0 || selectAllMatching) && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-brand-border)] bg-[var(--color-brand-accent)]/40 px-4 py-2.5 text-sm">
+            <div className="flex items-center gap-3">
+              <CheckSquare className="h-4 w-4 text-[var(--color-brand-primary-deep)]" />
+              <span className="font-semibold text-[var(--color-brand-fg)]">
+                {selectAllMatching
+                  ? `All ${fmtInt(total)} prospect(s) matching current filter selected`
+                  : `${fmtInt(selected.size)} selected`}
+              </span>
+              {!selectAllMatching && allOnPageSelected && total > rows.length && (
+                <button
+                  type="button"
+                  className="text-[var(--color-brand-primary-deep)] underline hover:no-underline"
+                  onClick={() => setSelectAllMatching(true)}
+                >
+                  Select all {fmtInt(total)} matching this filter
+                </button>
+              )}
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-[var(--color-brand-muted)] hover:text-[var(--color-brand-fg)]"
+                onClick={() => { setSelected(new Set()); setSelectAllMatching(false); }}
+              >
+                <X className="h-3 w-3" /> clear
+              </button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-rose-600 hover:bg-rose-50"
+              disabled={bulk.isPending}
+              onClick={() => {
+                const count = selectAllMatching ? total : selected.size;
+                if (! confirm(`Remove ${count} prospect(s)? This is soft-delete — rows can be restored in the DB but not the UI.`)) return;
+                if (selectAllMatching) {
+                  bulk.mutate({
+                    all_matching_filter: true,
+                    ...(status ? { status } : {}),
+                    ...(search.trim() ? { q: search.trim() } : {}),
+                  });
+                } else {
+                  bulk.mutate({ ids: Array.from(selected) });
+                }
+              }}
+            >
+              {bulk.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              Delete {selectAllMatching ? fmtInt(total) : fmtInt(selected.size)}
+            </Button>
+          </div>
+        )}
+
         {list.isLoading ? (
           <div className="p-4"><Skeleton className="h-40 w-full" /></div>
         ) : rows.length === 0 ? (
@@ -136,6 +227,16 @@ export default function ProspectsPage() {
             <Table>
               <THead>
                 <TR>
+                  <TH className="w-8">
+                    <input
+                      type="checkbox"
+                      aria-label={allOnPageSelected ? 'Deselect all on page' : 'Select all on page'}
+                      checked={allOnPageSelected}
+                      ref={(el) => { if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected; }}
+                      onChange={togglePageSelection}
+                      className="h-4 w-4 cursor-pointer accent-[var(--color-brand-primary)]"
+                    />
+                  </TH>
                   <TH>Email</TH>
                   <TH>Name</TH>
                   <TH>Farm</TH>
@@ -148,7 +249,16 @@ export default function ProspectsPage() {
               </THead>
               <TBody>
                 {rows.map((p) => (
-                  <TR key={p.id}>
+                  <TR key={p.id} className={selected.has(p.id) ? 'bg-[var(--color-brand-accent)]/40' : undefined}>
+                    <TD>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${p.email}`}
+                        checked={selected.has(p.id)}
+                        onChange={() => toggleRow(p.id)}
+                        className="h-4 w-4 cursor-pointer accent-[var(--color-brand-primary)]"
+                      />
+                    </TD>
                     <TD className="font-medium">{p.email}</TD>
                     <TD className="text-[var(--color-brand-muted)]">{p.name ?? '—'}</TD>
                     <TD className="text-[var(--color-brand-muted)]">{p.farmName ?? '—'}</TD>

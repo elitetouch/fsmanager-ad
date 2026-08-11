@@ -806,7 +806,7 @@ export const endpoints = {
     ),
 
   testSendEmailTemplate: (id: string, to: string) =>
-    apiData<{ to: string }>(api.post(`/email/templates/${id}/test-send`, { to })),
+    apiData<{ to: string[]; count: number }>(api.post(`/email/templates/${id}/test-send`, { to })),
 
   listEmailCampaigns: () =>
     apiData<{ campaigns: import('@/types/api').EmailCampaign[] }>(api.get('/email/campaigns')),

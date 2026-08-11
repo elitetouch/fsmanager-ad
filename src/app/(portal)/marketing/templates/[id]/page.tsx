@@ -88,7 +88,12 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
 
   const testSend = useMutation({
     mutationFn: (to: string) => endpoints.testSendEmailTemplate(id, to),
-    onSuccess: (r) => { toast.success(`Test email sent to ${r.to}.`); setTestOpen(false); },
+    onSuccess: (r) => {
+      toast.success(r.count === 1
+        ? `Test email sent to ${r.to[0]}.`
+        : `${r.count} test emails sent to ${r.to.join(', ')}.`);
+      setTestOpen(false);
+    },
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
 
@@ -532,21 +537,67 @@ function TestSendDialog({ open, onClose, onSend, pending }: {
   pending: boolean;
 }) {
   const [to, setTo] = useState('');
+
+  // Preview the parsed recipient list so the reviewer sees exactly what
+  // will be sent before hitting the button. Same rules as the backend:
+  // commas / semicolons / whitespace all valid separators, deduped +
+  // lowercased, silently drop invalid tokens.
+  const parsed = to
+    .split(/[\s,;]+/)
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+  const valid = Array.from(new Set(parsed.filter((t) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t))));
+  const invalid = parsed.filter((t) => !valid.includes(t));
+  const overCap = valid.length > 10;
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader><DialogTitle>Send a test email</DialogTitle></DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="to">Recipient email</Label>
-          <Input id="to" type="email" value={to} onChange={(e) => setTo(e.target.value)} placeholder="you@fsinnovation.net" />
+          <Label htmlFor="to">Recipient email(s)</Label>
+          <textarea
+            id="to"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            placeholder="you@fsinnovation.net, teammate@fsinnovation.net"
+            rows={3}
+            className="w-full rounded-md border border-[var(--color-brand-input-border)] bg-white px-3 py-2 text-sm focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-primary)]"
+          />
           <p className="text-xs text-[var(--color-brand-muted)]">
-            Uses placeholder values for personalisation vars (name → "Test recipient", farm_name → "Test Farm").
+            Separate multiple addresses with commas, semicolons, or spaces. Max 10 per test.
+          </p>
+          {valid.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 rounded-md bg-[var(--color-brand-accent)]/40 p-2 text-xs">
+              <span className="font-semibold text-[var(--color-brand-primary-deep)]">
+                Will send to {valid.length}:
+              </span>
+              {valid.map((email) => (
+                <span key={email} className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[var(--color-brand-fg)]">
+                  {email}
+                </span>
+              ))}
+            </div>
+          )}
+          {invalid.length > 0 && (
+            <p className="text-xs text-amber-700">
+              {invalid.length} address(es) look invalid and will be skipped: <span className="font-mono">{invalid.slice(0, 3).join(', ')}{invalid.length > 3 ? '…' : ''}</span>
+            </p>
+          )}
+          {overCap && (
+            <p className="text-xs text-rose-700">
+              Too many recipients — pick at most 10 (you have {valid.length}).
+            </p>
+          )}
+          <p className="text-xs text-[var(--color-brand-muted)]">
+            Uses placeholder values for personalisation vars (<code>name</code> → "Test recipient", <code>farm_name</code> → "Test Farm").
           </p>
         </div>
         <DialogFooter>
           <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-          <Button disabled={!to || pending} onClick={() => onSend(to)}>
-            {pending && <Loader2 className="h-4 w-4 animate-spin" />} Send test
+          <Button disabled={valid.length === 0 || overCap || pending} onClick={() => onSend(to)}>
+            {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Send {valid.length > 1 ? `${valid.length} tests` : 'test'}
           </Button>
         </DialogFooter>
       </DialogContent>

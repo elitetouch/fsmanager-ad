@@ -17,6 +17,10 @@ export type AdminUser = {
   id: string;
   name: string;
   email: string;
+  // Must stay in step with AdminRole in lib/permissions-catalog.ts.
+  // social_media_manager was added there with the email-marketing work
+  // but never here, so assigning that role through the admin form was a
+  // type error — invisible while `endpoints` was inferred as `any`.
   role: 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only' | 'social_media_manager';
   status: 'active' | 'suspended' | 'archived';
   permissions: Record<string, unknown> | null;

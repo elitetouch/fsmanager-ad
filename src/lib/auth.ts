@@ -16,6 +16,9 @@ export type StoredAdmin = {
   id: string;
   name: string;
   email: string;
+  // Kept in step with AdminRole (lib/permissions-catalog.ts) and
+  // AdminUser['role'] (types/api.ts). A social_media_manager could log
+  // in but not be represented in the session type.
   role: 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only' | 'social_media_manager';
   status: string;
   capabilities?: string[];

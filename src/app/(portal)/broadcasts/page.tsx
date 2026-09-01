@@ -156,7 +156,7 @@ function StatusBadge({ status }: { status: string }) {
 
 function CampaignForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState('');
-  const [channel, setChannel] = useState<'email' | 'sms' | 'inapp' | 'push'>('email');
+  const [channel, setChannel] = useState<'email' | 'sms' | 'push'>('email');
   const [linkUrl, setLinkUrl] = useState('/');
   const [pushReachableOnly, setPushReachableOnly] = useState(true);
 
@@ -208,12 +208,15 @@ function CampaignForm({ onDone }: { onDone: () => void }) {
           <Label>Channel *</Label>
           <select
             value={channel}
-            onChange={(e) => setChannel(e.target.value as 'email' | 'sms' | 'inapp' | 'push')}
+            onChange={(e) => setChannel(e.target.value as 'email' | 'sms' | 'push')}
             className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"
           >
             <option value="email">Email</option>
             <option value="sms">SMS</option>
-            <option value="inapp">In-app</option>
+            {/* "In-app" used to sit here and was never implemented: every
+                recipient failed and the campaign still reported "sent".
+                It read as the push option, so it got picked instead of
+                push. Removed rather than relabelled. */}
             <option value="push">Push notification</option>
           </select>
         </div>

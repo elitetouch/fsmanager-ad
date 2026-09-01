@@ -95,6 +95,28 @@ import type {
   TrendBundle,
 } from '@/types/api';
 
+/**
+ * Campaign create/update payload.
+ *
+ * A NAMED type, not `Parameters<typeof endpoints.createEmailCampaign>[0]`.
+ *
+ * That inline form made `endpoints` reference its own type while still
+ * being inferred, so TypeScript gave up and typed the whole object as
+ * `any` (TS7022). Every call site across the portal then silently lost
+ * its types, which surfaced as ~100 unrelated-looking implicit-any
+ * errors in files that had nothing to do with email — and as a build
+ * that fails long after the change that caused it.
+ */
+type EmailCampaignPayload = {
+  name: string;
+  template_id: string;
+  from_email?: string | null;
+  from_name?: string | null;
+  reply_to?: string | null;
+  audience_filter: import('@/types/api').AudienceFilter;
+  scheduled_for?: string | null;
+};
+
 export const endpoints = {
   // Auth
   login: (email: string, password: string, code?: string) =>
@@ -602,8 +624,12 @@ export const endpoints = {
     ),
   createBroadcast: (payload: Record<string, unknown>) =>
     apiData<{ campaign: Record<string, unknown> }>(api.post('/broadcasts', payload)),
+  // pushReachableCount is null for non-push channels; for push it is how
+  // many of those recipients actually have a device that can receive one.
   previewBroadcast: (id: string) =>
-    apiData<{ recipientsCount: number }>(api.post(`/broadcasts/${id}/preview`)),
+    apiData<{ recipientsCount: number; pushReachableCount: number | null }>(
+      api.post(`/broadcasts/${id}/preview`),
+    ),
   dispatchBroadcast: (id: string) =>
     apiData<{ campaign: Record<string, unknown> }>(api.post(`/broadcasts/${id}/dispatch`)),
 
@@ -814,28 +840,12 @@ export const endpoints = {
   getEmailCampaign: (id: string) =>
     apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.get(`/email/campaigns/${id}`)),
 
-  createEmailCampaign: (payload: {
-    name: string;
-    template_id: string;
-    from_email?: string | null;
-    from_name?: string | null;
-    reply_to?: string | null;
-    audience_filter: import('@/types/api').AudienceFilter;
-    scheduled_for?: string | null;
-  }) =>
+  createEmailCampaign: (payload: EmailCampaignPayload) =>
     apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.post('/email/campaigns', payload)),
 
   updateEmailCampaign: (
     id: string,
-    payload: Partial<{
-      name: string;
-      template_id: string;
-      from_email: string | null;
-      from_name: string | null;
-      reply_to: string | null;
-      audience_filter: import('@/types/api').AudienceFilter;
-      scheduled_for: string | null;
-    }>,
+    payload: Partial<EmailCampaignPayload>,
   ) =>
     apiData<{ campaign: import('@/types/api').EmailCampaign }>(api.patch(`/email/campaigns/${id}`, payload)),
 

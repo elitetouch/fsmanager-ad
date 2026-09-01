@@ -1,6 +1,8 @@
 import { cn } from '@/lib/utils';
 
 interface Props {
+  // ReactNode, not string: detail pages compose a back-arrow link into
+  // the title. `description` was already ReactNode for the same reason.
   title: React.ReactNode;
   description?: React.ReactNode;
   actions?: React.ReactNode;

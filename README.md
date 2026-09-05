@@ -241,3 +241,6 @@ the source of truth — never trust the UI check alone.
 ## License
 
 Proprietary. © Farm Support Innovation.
+
+
+<!-- Security scan triggered at 2026-09-05 07:49:56 -->

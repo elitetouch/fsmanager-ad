@@ -117,6 +117,156 @@ type EmailCampaignPayload = {
   scheduled_for?: string | null;
 };
 
+
+/* ------------------------------------------------------------------ */
+/*  Veterinary review of disease checks                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * One disease check awaiting (or carrying) a vet's verdict.
+ *
+ * `agreesWithModel` is THREE-VALUED, and null is not a shrug. It means
+ * the comparison is not defined: the row is unreviewed, or the vet
+ * marked it `unclear` because no answer is available from a photograph.
+ * Folding either into "wrong" would manufacture a failure rate out of
+ * missing data.
+ */
+export type DiagnosisReviewDto = {
+  id: string;
+  createdAt: string;
+
+  predictedClass: string | null;
+  confidence: number | null;
+  inconclusiveReason: string | null;
+  modelVersion: string | null;
+  latencyMs: number | null;
+
+  /**
+   * Out-of-distribution scores WITH the thresholds they were judged
+   * against. The thresholds move as the model is retuned, so the pair
+   * has to travel together or old rows become uninterpretable.
+   */
+  ood: {
+    energy: number | null;
+    distance: number | null;
+    nearestCentroid: string | null;
+    energyThreshold: number | null;
+    distanceThreshold: number | null;
+  };
+
+  userFeedback: 'agreed' | 'disagreed' | 'unsure' | null;
+  userReportedDisease: string | null;
+
+  vetLabel: string | null;
+  vetReviewedAt: string | null;
+  vetReviewedBy: string | null;
+  agreesWithModel: boolean | null;
+
+  consultationRequested: boolean;
+  consultationRequestedAt: string | null;
+  awaitingVetReply: boolean;
+  vetRepliedAt: string | null;
+
+  hasGradcam: boolean;
+};
+
+/** The clinical picture, assembled from the cycle's own records. */
+export type ClinicalBriefDto = {
+  cycleLinked: boolean;
+  cycle: {
+    breed: string | null;
+    penName: string | null;
+    startDate: string | null;
+    ageDays: number | null;
+    ageWeeks: number | null;
+    placedBirds: number | null;
+    currentBirds: number | null;
+  } | null;
+  mortality: {
+    recorded: boolean;
+    total?: number;
+    totalPercent?: number | null;
+    last7Days?: number;
+    previous7Days?: number;
+    trend?: 'none' | 'new' | 'rising' | 'falling' | 'steady';
+    lastRecordedOn?: string | null;
+    dailyLast14?: Record<string, number>;
+  } | null;
+  vaccinations: {
+    recorded: boolean;
+    given?: VaccinationRowDto[];
+    missed?: VaccinationRowDto[];
+    missedCritical?: number;
+    skipped?: VaccinationRowDto[];
+    upcoming?: VaccinationRowDto[];
+  } | null;
+  treatments: {
+    recorded: boolean;
+    items?: Array<{
+      date: string | null;
+      type: string | null;
+      product: string | null;
+      dosage: string | null;
+      quantity: number | null;
+      unit: string | null;
+      note: string | null;
+    }>;
+  } | null;
+  intake: {
+    recorded: boolean;
+    feedLast7?: number;
+    feedPrevious7?: number;
+    waterLast7?: number;
+    waterPrevious7?: number;
+    feedUnit?: string | null;
+    waterUnit?: string | null;
+  } | null;
+};
+
+export type VaccinationRowDto = {
+  name: string | null;
+  diseaseTarget: string | null;
+  ageDays: number | null;
+  scheduledDate: string | null;
+  completedAt: string | null;
+  critical: boolean;
+  method: string | null;
+  skipReason: string | null;
+};
+
+export type DiagnosisDetailDto = DiagnosisReviewDto & {
+  scores: Record<string, string>;
+  diseaseInfo: Record<string, unknown>;
+  vetNotes: string | null;
+  vetReply: string | null;
+  allowedLabels: string[];
+  clinical: ClinicalBriefDto;
+};
+
+/** Server health. Every check can report `available: false` off-Linux. */
+export type ServerHealthDto = {
+  status: 'ok' | 'warning' | 'critical';
+  capturedAt: string;
+  checks: {
+    memory: Record<string, number | boolean | null>;
+    swap: Record<string, number | boolean | null>;
+    disk: Record<string, number | string | boolean | null>;
+    load: Record<string, number | boolean | null>;
+    queue: Record<string, number | boolean | null>;
+    inference: {
+      available?: boolean;
+      enabled?: boolean;
+      url?: string;
+      reachable?: boolean;
+      httpStatus?: number;
+      responseMs?: number;
+      error?: string;
+      memory?: Record<string, number | boolean | null>;
+    };
+    diagnosisStorage: Record<string, number | boolean | null>;
+  };
+};
+
 export const endpoints = {
   // Auth
   login: (email: string, password: string, code?: string) =>
@@ -614,6 +764,64 @@ export const endpoints = {
     apiData<{ code: Record<string, unknown> }>(api.patch(`/promo-codes/${id}`, payload)),
 
   // Broadcasts
+  /* ---------------------------------------------------------------- */
+  /*  Veterinary review                                               */
+  /* ---------------------------------------------------------------- */
+
+  listDiagnosisReviews: (params: Record<string, string | number | boolean | undefined>) =>
+    apiData<{
+      diagnoses: DiagnosisReviewDto[];
+      meta: Paginated['meta'] & { pendingTotal: number; awaitingReplyTotal: number };
+    }>(api.get('/diagnoses', { params })),
+
+  showDiagnosisReview: (id: string) =>
+    apiData<{ diagnosis: DiagnosisDetailDto }>(api.get(`/diagnoses/${id}`)),
+
+  diagnosisStats: () =>
+    apiData<{
+      stats: {
+        total: number;
+        reviewed: number;
+        pending: number;
+        scorable: number;
+        correct: number;
+        accuracy: number | null;
+        refusedButReal: number;
+        acceptedButNotDroppings: number;
+        confirmedNegatives: number;
+        labelCounts: Record<string, number>;
+      };
+    }>(api.get('/diagnoses/stats')),
+
+  /**
+   * Commit the ground-truth label. This is the row that trains the next
+   * model — see the backend migration on why `not_droppings` and
+   * `unclear` are allowed values.
+   */
+  reviewDiagnosis: (id: string, label: string, notes?: string) =>
+    apiData<{ diagnosis: DiagnosisReviewDto }>(
+      api.post(`/diagnoses/${id}/review`, { label, ...(notes ? { notes } : {}) }),
+    ),
+
+  /**
+   * Answer the farmer. Separate from the label on purpose: notes are
+   * candid and written for retraining, a reply is written to a customer.
+   */
+  replyToDiagnosis: (id: string, reply: string) =>
+    apiData<{ diagnosis: DiagnosisReviewDto }>(api.post(`/diagnoses/${id}/reply`, { reply })),
+
+  /**
+   * The photograph. It lives on a private disk and this authenticated
+   * route is the only way to it, so the <img> cannot simply point at a
+   * URL — the caller fetches a blob and holds an object URL.
+   */
+  diagnosisImageBlob: async (id: string, variant: 'original' | 'gradcam' = 'original') => {
+    const res = await api.get(`/diagnoses/${id}/image/${variant}`, { responseType: 'blob' });
+    return URL.createObjectURL(res.data as Blob);
+  },
+
+  serverHealth: () => apiData<{ health: ServerHealthDto }>(api.get('/system/health')),
+
   listBroadcasts: (params: Record<string, string | number | undefined>) =>
     apiData<{ campaigns: Array<Record<string, unknown>>; meta: Paginated['meta'] }>(
       api.get('/broadcasts', { params }),

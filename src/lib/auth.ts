@@ -1,3 +1,4 @@
+import type { AdminRole } from './permissions-catalog';
 /**
  * Sanctum token storage for the admin portal.
  *
@@ -19,7 +20,12 @@ export type StoredAdmin = {
   // Kept in step with AdminRole (lib/permissions-catalog.ts) and
   // AdminUser['role'] (types/api.ts). A social_media_manager could log
   // in but not be represented in the session type.
-  role: 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only' | 'social_media_manager';
+  // Imported rather than restated. This union previously existed in
+  // three places (here, types/api.ts, permissions-catalog.ts) and adding
+  // the `veterinarian` role broke the build in the two that were
+  // forgotten — which is the cheap version of that failure. The
+  // expensive version is a role the UI silently cannot represent.
+  role: AdminRole;
   status: string;
   capabilities?: string[];
 };

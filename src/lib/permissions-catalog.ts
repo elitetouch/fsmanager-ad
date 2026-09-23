@@ -39,7 +39,14 @@ export type PermissionGroup = {
 /**
  * Canonical role names as used on the backend.
  */
-export type AdminRole = 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only' | 'social_media_manager';
+export type AdminRole =
+  | 'super_admin'
+  | 'admin'
+  | 'support'
+  | 'analyst'
+  | 'read_only'
+  | 'social_media_manager'
+  | 'veterinarian';
 
 /**
  * Permission key → metadata, grouped by module for display.
@@ -249,6 +256,24 @@ export const PERMISSION_CATALOG: PermissionGroup[] = [
     ],
   },
   {
+    name: 'Disease checks',
+    description: 'Veterinary review of submitted droppings photos.',
+    items: [
+      {
+        key: 'diagnoses.review',
+        label: 'View the review queue',
+        description:
+          'See submitted photos, the model\'s scores, and the cycle\'s clinical history.',
+      },
+      {
+        key: 'diagnoses.label',
+        label: 'Label and reply',
+        description:
+          'Record what the droppings actually showed, and answer farmers who asked for a vet.',
+      },
+    ],
+  },
+  {
     name: 'Operations',
     description: 'Queue health and exports.',
     items: [
@@ -266,6 +291,12 @@ export const PERMISSION_CATALOG: PermissionGroup[] = [
         key: 'ops.failed_jobs.flush',
         label: 'Flush all failed jobs',
         description: 'Truncate the failed_jobs table. Audit-logged.',
+      },
+      {
+        key: 'system.health',
+        label: 'View server health',
+        description:
+          'Memory, disk, load and the inference service. Its own key rather than dashboard.view — operational detail an analyst has no context to read.',
       },
       {
         key: 'exports.run',
@@ -329,6 +360,15 @@ export const ROLE_DEFAULTS: Record<AdminRole, string[]> = {
     'audit.view',
     'notifications.*',
   ],
+  // In-house vet. Scoped to the disease-check queue and nothing else on
+  // purpose: this role is meant to be given to a practising vet who is
+  // not an employee, so it must not carry billing, user PII, or the
+  // ability to message anyone outside that queue.
+  veterinarian: [
+    'diagnoses.review',
+    'diagnoses.label',
+    'dashboard.view',
+  ],
   social_media_manager: [
     'marketing.*',
     'email_prospects.*',
@@ -367,6 +407,7 @@ export const ROLE_LABELS: Record<AdminRole, string> = {
   analyst: 'Analyst',
   read_only: 'Read-only',
   social_media_manager: 'Social media manager',
+  veterinarian: 'Veterinarian',
 };
 
 /**

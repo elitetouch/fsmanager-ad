@@ -48,6 +48,9 @@ const PRIMARY: Item[] = [
   { href: '/accounts', label: 'Accounts', icon: Receipt, perm: 'accounts.view' },
   { href: '/tokens', label: 'Tokens', icon: Coins, perm: 'tokens.view' },
   { href: '/support', label: 'Support', icon: MessageSquareText, perm: 'support.view' },
+  // Sits in PRIMARY, not under Reference, because it is a worked queue
+  // with farmers waiting in it — not a lookup table.
+  { href: '/diagnoses', label: 'Disease checks', icon: Stethoscope, perm: 'diagnoses.review' },
 ];
 
 const ANALYTICS: Item[] = [
@@ -89,6 +92,7 @@ const OPS: Item[] = [
   { href: '/failed-jobs', label: 'Failed jobs', icon: AlertTriangle, perm: 'ops.failed_jobs.view' },
   { href: '/webhooks', label: 'Webhook log', icon: Webhook, perm: 'webhooks.view' },
   { href: '/notifications', label: 'Notifications', icon: Bell, perm: 'notifications.view' },
+  { href: '/system/health', label: 'Server health', icon: Activity, perm: 'system.health' },
 ];
 
 const ADMIN: Item[] = [

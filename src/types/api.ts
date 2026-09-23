@@ -3,6 +3,8 @@
  * docs/API_ENDPOINTS.md. Add new types here when you wire a new endpoint.
  */
 
+import type { AdminRole } from '@/lib/permissions-catalog';
+
 export type Paginated<T = unknown> = {
   rows?: T[];
   meta: {
@@ -21,7 +23,8 @@ export type AdminUser = {
   // social_media_manager was added there with the email-marketing work
   // but never here, so assigning that role through the admin form was a
   // type error — invisible while `endpoints` was inferred as `any`.
-  role: 'super_admin' | 'admin' | 'support' | 'analyst' | 'read_only' | 'social_media_manager';
+  // Single definition lives in permissions-catalog.ts — see auth.ts.
+  role: AdminRole;
   status: 'active' | 'suspended' | 'archived';
   permissions: Record<string, unknown> | null;
   lastLoginAt: string | null;

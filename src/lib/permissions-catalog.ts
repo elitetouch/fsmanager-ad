@@ -220,6 +220,22 @@ export const PERMISSION_CATALOG: PermissionGroup[] = [
     ],
   },
   {
+    name: 'API partners',
+    description: 'Outside apps (e.g. EWDSS) that use PENKEEP devices with an API key.',
+    items: [
+      {
+        key: 'partners.view',
+        label: 'View API partners',
+        description: 'See partners, their keys (masked), allocated devices and activity.',
+      },
+      {
+        key: 'partners.manage',
+        label: 'Manage API partners',
+        description: 'Create partners, issue / rotate / revoke keys, suspend, and allocate devices.',
+      },
+    ],
+  },
+  {
     name: 'Reference data',
     description: 'Manage breeds, hatcheries, and vaccination protocols.',
     items: [

@@ -12,6 +12,7 @@ import {
   Compass,
   Cpu,
   Download,
+  KeyRound,
   LayoutDashboard,
   LifeBuoy,
   Library,
@@ -86,6 +87,7 @@ const DEVICES: Item[] = [
   { href: '/devices', label: 'PENKEEP devices', icon: Cpu, perm: 'devices.view' },
   { href: '/devices/pricing', label: 'Device pricing', icon: Tag, perm: 'devices.pricing' },
   { href: '/devices/firmware', label: 'Firmware (OTA)', icon: Download, perm: 'devices.firmware' },
+  { href: '/partners', label: 'API partners', icon: KeyRound, perm: 'partners.view' },
 ];
 
 const OPS: Item[] = [

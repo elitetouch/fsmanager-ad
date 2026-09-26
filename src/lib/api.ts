@@ -74,6 +74,18 @@ export function apiErrorMessage(err: unknown, fallback = 'Something went wrong.'
   return fallback;
 }
 
+/**
+ * Field-level validation errors from a 422 response, keyed like the
+ * request fields (e.g. `slug`, `ip_allowlist.0`). Empty for other errors.
+ */
+export function apiFieldErrors(err: unknown): Record<string, string[]> {
+  if (axios.isAxiosError(err) && err.response?.status === 422) {
+    const errors = (err.response.data as { errors?: Record<string, string[]> } | undefined)?.errors;
+    if (errors && typeof errors === 'object') return errors;
+  }
+  return {};
+}
+
 // ----------------------------------------------------------------------
 // Endpoint helpers — one function per backend route. Keep these thin;
 // page-level data shaping happens in React components.
@@ -903,6 +915,54 @@ export const endpoints = {
   resendFlockCmd: (id: string) =>
     apiData<{ mqtt_published: boolean }>(api.post(`/pen-devices/${id}/resend-flock-cmd`)),
 
+  /* ────────────────────── API partners ────────────────────── */
+  // Outside apps (e.g. EWDSS) using PENKEEP devices with an API key.
+  // `plain_key` is returned ONLY by issue/rotate and never again.
+  listApiPartners: (params: { q?: string; status?: string; page?: number; per_page?: number }) =>
+    apiData<{
+      partners: ApiPartnerRow[];
+      meta: { total: number; per_page: number; current_page: number; last_page: number };
+      scopes: PartnerScopeCatalog;
+    }>(api.get('/api-partners', { params })),
+
+  showApiPartner: (id: string) =>
+    apiData<{
+      partner: ApiPartner;
+      keys: ApiPartnerKey[];
+      devices: ApiPartnerDevice[];
+      activity: ApiPartnerActivity[];
+      scopes: PartnerScopeCatalog;
+    }>(api.get(`/api-partners/${id}`)),
+
+  createApiPartner: (payload: ApiPartnerInput & { slug: string }) =>
+    apiData<{ partner: ApiPartner }>(api.post('/api-partners', payload)),
+
+  updateApiPartner: (id: string, payload: Partial<ApiPartnerInput>) =>
+    apiData<{ partner: ApiPartner }>(api.patch(`/api-partners/${id}`, payload)),
+
+  suspendApiPartner: (id: string) =>
+    apiData<{ partner: ApiPartner }>(api.post(`/api-partners/${id}/suspend`)),
+
+  activateApiPartner: (id: string) =>
+    apiData<{ partner: ApiPartner }>(api.post(`/api-partners/${id}/activate`)),
+
+  issueApiPartnerKey: (id: string, payload: { name: string; expires_in_days?: 30 | 90 | 365; scopes?: string[] }) =>
+    apiData<{ key: ApiPartnerKey; plain_key: string }>(api.post(`/api-partners/${id}/keys`, payload)),
+
+  revokeApiPartnerKey: (id: string, keyId: string) =>
+    apiData<{ key: ApiPartnerKey }>(api.post(`/api-partners/${id}/keys/${keyId}/revoke`)),
+
+  rotateApiPartnerKey: (id: string, keyId: string) =>
+    apiData<{ key: ApiPartnerKey; plain_key: string; old_key: ApiPartnerKey }>(
+      api.post(`/api-partners/${id}/keys/${keyId}/rotate`),
+    ),
+
+  allocateDeviceToPartner: (id: string, deviceId: string) =>
+    apiData<{ device: ApiPartnerDevice }>(api.post(`/api-partners/${id}/devices`, { device_id: deviceId })),
+
+  releaseDeviceFromPartner: (id: string, deviceId: string) =>
+    apiData<{ device: ApiPartnerDevice }>(api.delete(`/api-partners/${id}/devices/${deviceId}`)),
+
   /* ────────────────────── PENKEEP pricing ────────────────────── */
   listPenDevicePricing: () =>
     apiData<{ pricing: Array<{
@@ -1194,3 +1254,79 @@ export type ProtocolRow = {
   description?: string | null;
   is_active: boolean;
 };
+
+/* ────────────────────── API partners ────────────────────── */
+
+export type PartnerScope = 'penkeep.read' | 'penkeep.link' | 'penkeep.control';
+
+export type PartnerScopeCatalog = Record<PartnerScope, { label: string; help: string }>;
+
+export type ApiPartnerInput = {
+  name: string;
+  description?: string | null;
+  contact_name?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  scopes: PartnerScope[];
+  rate_limit_per_minute: number;
+  ip_allowlist?: string[];
+};
+
+export type ApiPartner = {
+  id: string;
+  name: string;
+  slug: string;
+  status: 'active' | 'suspended';
+  description: string | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  scopes: PartnerScope[];
+  rate_limit_per_minute: number;
+  ip_allowlist: string[];
+  suspended_at: string | null;
+  created_at: string | null;
+};
+
+export type ApiPartnerRow = ApiPartner & {
+  active_keys_count: number;
+  devices_count: number;
+  last_used_at: string | null;
+};
+
+export type ApiPartnerKey = {
+  id: string;
+  name: string;
+  /** e.g. fsk_live_Ab3x…9QzT — the full key is never returned after creation */
+  masked: string;
+  state: 'active' | 'expired' | 'revoked';
+  /** null = inherits all of the partner's scopes */
+  scopes: PartnerScope[] | null;
+  expires_at: string | null;
+  last_used_at: string | null;
+  last_used_ip: string | null;
+  revoked_at: string | null;
+  created_at: string | null;
+};
+
+export type ApiPartnerDevice = {
+  id: string;
+  device_id: string;
+  label: string | null;
+  status: string;
+  online: boolean;
+  last_seen_at: string | null;
+  partner_target_type: 'storage' | 'farm' | null;
+  partner_target_ref: string | null;
+  partner_label: string | null;
+  partner_linked_at: string | null;
+};
+
+export type ApiPartnerActivity = {
+  id: string;
+  action: string;
+  payload: Record<string, unknown> | null;
+  admin: { id: string; name: string; email: string } | null;
+  created_at: string | null;
+};
+

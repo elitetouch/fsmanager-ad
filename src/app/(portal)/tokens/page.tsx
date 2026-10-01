@@ -23,7 +23,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { apiErrorMessage, endpoints } from '@/lib/api';
-import type { TokenPrice } from '@/types/api';
+import { TOKEN_TYPES, productionTypeLabel, type TokenType, TokenPrice } from '@/types/api';
 import { fmtDateTime, fmtInt, fmtMinor } from '@/lib/format';
 import { ManualPurchaseForm } from '@/components/forms/manual-purchase-form';
 
@@ -168,8 +168,11 @@ function BalancesPanel() {
             className="h-10 rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"
           >
             <option value="">Any type</option>
-            <option value="broiler">Broiler</option>
-            <option value="layer">Layer</option>
+            {TOKEN_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {productionTypeLabel(t)}
+              </option>
+            ))}
           </select>
           <Button type="submit" variant="secondary">Apply</Button>
         </form>
@@ -335,7 +338,7 @@ function ManualPurchasePanel() {
 function AdjustPanel() {
   const qc = useQueryClient();
   const [accountId, setAccountId] = useState('');
-  const [tokenType, setTokenType] = useState<'broiler' | 'layer'>('broiler');
+  const [tokenType, setTokenType] = useState<TokenType>('broiler');
   const [tier, setTier] = useState<'basic' | 'premium'>('basic');
   const [entryType, setEntryType] = useState<'credit' | 'debit'>('credit');
   const [quantity, setQuantity] = useState<number | ''>('');
@@ -394,11 +397,14 @@ function AdjustPanel() {
           <Label>Token type</Label>
           <select
             value={tokenType}
-            onChange={(e) => setTokenType(e.target.value as 'broiler' | 'layer')}
+            onChange={(e) => setTokenType(e.target.value as TokenType)}
             className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"
           >
-            <option value="broiler">Broiler</option>
-            <option value="layer">Layer</option>
+            {TOKEN_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {productionTypeLabel(t)}
+              </option>
+            ))}
           </select>
         </div>
         <div>
@@ -700,7 +706,7 @@ function EditPriceForm({ price, onDone }: { price: TokenPrice; onDone: () => voi
 }
 
 function NewPriceForm({ onDone }: { onDone: () => void }) {
-  const [tokenType, setTokenType] = useState<'broiler' | 'layer'>('broiler');
+  const [tokenType, setTokenType] = useState<TokenType>('broiler');
   const [tier, setTier] = useState<'basic' | 'premium'>('basic');
   const [unitPriceMinor, setUnitPriceMinor] = useState<number | ''>('');
   const [currency, setCurrency] = useState('NGN');
@@ -736,11 +742,14 @@ function NewPriceForm({ onDone }: { onDone: () => void }) {
         <Label>Token type</Label>
         <select
           value={tokenType}
-          onChange={(e) => setTokenType(e.target.value as 'broiler' | 'layer')}
+          onChange={(e) => setTokenType(e.target.value as TokenType)}
           className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"
         >
-          <option value="broiler">Broiler</option>
-          <option value="layer">Layer</option>
+          {TOKEN_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {productionTypeLabel(t)}
+            </option>
+          ))}
         </select>
       </div>
       <div>

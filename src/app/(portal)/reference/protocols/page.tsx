@@ -1,5 +1,7 @@
 'use client';
 
+import { PRODUCTION_TYPES, productionTypeLabel } from '@/types/api';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -68,9 +70,11 @@ export default function ProtocolsPage() {
           <select value={production} onChange={(e) => { setProduction(e.target.value); setPage(1); }}
             className="h-10 rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm">
             <option value="">Any production</option>
-            <option value="broiler">Broiler</option>
-            <option value="layer">Layer</option>
-            <option value="dual_purpose">Dual purpose</option>
+            {PRODUCTION_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {productionTypeLabel(t)}
+              </option>
+            ))}
           </select>
           <select value={system} onChange={(e) => { setSystem(e.target.value); setPage(1); }}
             className="h-10 rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm">
@@ -193,9 +197,11 @@ function ProtocolForm({ initial, onDone }: { initial?: ProtocolRow; onDone: () =
         <Label>Production *</Label>
         <select value={productionType} onChange={(e) => setProductionType(e.target.value as ProtocolRow['production_type'])}
           className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm">
-          <option value="broiler">Broiler</option>
-          <option value="layer">Layer</option>
-          <option value="dual_purpose">Dual purpose</option>
+          {PRODUCTION_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {productionTypeLabel(t)}
+            </option>
+          ))}
         </select>
       </div>
       <div>

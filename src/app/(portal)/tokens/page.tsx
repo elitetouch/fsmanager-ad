@@ -23,9 +23,35 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { apiErrorMessage, endpoints } from '@/lib/api';
-import { TOKEN_TYPES, productionTypeLabel, type TokenType, TokenPrice } from '@/types/api';
+import { TOKEN_TYPES, productionTypeLabel, type ProductionType, type TokenType, TokenPrice } from '@/types/api';
 import { fmtDateTime, fmtInt, fmtMinor } from '@/lib/format';
 import { ManualPurchaseForm } from '@/components/forms/manual-purchase-form';
+
+/**
+ * The token window per production type, as the backend enforces it.
+ *
+ * Driven off PRODUCTION_TYPES rather than written out as cards, because
+ * the hardcoded version silently went stale the moment cockerel was
+ * added: the dropdown below offered a Cockerel token while this banner
+ * still said there were three kinds.
+ *
+ * Mirrors FlockType::cycleWeeks(). If these numbers and that method ever
+ * disagree, the method is right and this is a bug.
+ */
+const TOKEN_POLICY: ReadonlyArray<{ type: ProductionType; window: string; note: string }> = [
+  { type: 'broiler', window: '7 weeks per token', note: 'Full meat-bird cycle window.' },
+  {
+    type: 'cockerel',
+    window: '20 weeks per token',
+    note: 'Cockerels sell from 12 to 20 weeks — the window stays open to the last bird.',
+  },
+  { type: 'layer', window: '18 months per token', note: 'Covers brood → onset of lay → peak.' },
+  {
+    type: 'dual_purpose',
+    window: '18 months per token',
+    note: 'Spends layer tokens — same 18-month window.',
+  },
+];
 
 export default function TokensPage() {
   return (
@@ -94,22 +120,19 @@ function TokenRulesNote() {
             production window — no daily fees, no recurring charges per record.
           </p>
 
-          <ul className="mt-3 grid gap-2 sm:grid-cols-3">
-            <li className="rounded-lg border border-[var(--color-brand-border)] bg-white px-3 py-2">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-brand-primary-deep)]">Broiler</p>
-              <p className="mt-0.5 text-sm font-bold text-[var(--color-brand-fg)]">7 weeks per token</p>
-              <p className="text-[11px] text-[var(--color-brand-muted)]">Full meat-bird cycle window.</p>
-            </li>
-            <li className="rounded-lg border border-[var(--color-brand-border)] bg-white px-3 py-2">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-brand-primary-deep)]">Layer</p>
-              <p className="mt-0.5 text-sm font-bold text-[var(--color-brand-fg)]">18 months per token</p>
-              <p className="text-[11px] text-[var(--color-brand-muted)]">Covers brood → onset of lay → peak.</p>
-            </li>
-            <li className="rounded-lg border border-[var(--color-brand-border)] bg-white px-3 py-2">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-brand-primary-deep)]">Dual-purpose</p>
-              <p className="mt-0.5 text-sm font-bold text-[var(--color-brand-fg)]">18 months per token</p>
-              <p className="text-[11px] text-[var(--color-brand-muted)]">Priced and timed on the layer policy.</p>
-            </li>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {TOKEN_POLICY.map((row) => (
+              <li
+                key={row.type}
+                className="rounded-lg border border-[var(--color-brand-border)] bg-white px-3 py-2"
+              >
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-brand-primary-deep)]">
+                  {productionTypeLabel(row.type)}
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-[var(--color-brand-fg)]">{row.window}</p>
+                <p className="text-[11px] text-[var(--color-brand-muted)]">{row.note}</p>
+              </li>
+            ))}
           </ul>
 
           <ul className="mt-4 space-y-1.5 text-[12.5px] leading-relaxed text-[var(--color-brand-fg-soft)]">

@@ -1,4 +1,45 @@
 /**
+ * How a flock is farmed. Mirrors FlockType::TYPES on the backend.
+ *
+ * `cockerel` is a male layer-strain chick grown for meat. It is a
+ * separate type rather than a broiler because it takes roughly three
+ * times as long to reach sale weight, so broiler benchmarks would mark
+ * every cockerel batch as failing.
+ */
+export type ProductionType = 'broiler' | 'cockerel' | 'layer' | 'dual_purpose';
+
+export const PRODUCTION_TYPES: readonly ProductionType[] = [
+  'broiler',
+  'cockerel',
+  'layer',
+  'dual_purpose',
+] as const;
+
+/**
+ * Tokens that can be priced, sold, granted or put on a promo code.
+ *
+ * SHORTER THAN ProductionType, deliberately: dual-purpose flocks have no
+ * token of their own and debit the layer balance, so offering a
+ * "dual_purpose" token here would create stock nobody can spend. Mirrors
+ * FlockType::TOKEN_TYPES.
+ */
+export const TOKEN_TYPES = ['broiler', 'cockerel', 'layer'] as const;
+export type TokenType = (typeof TOKEN_TYPES)[number];
+
+export function productionTypeLabel(t: ProductionType | TokenType): string {
+  switch (t) {
+    case 'broiler':
+      return 'Broiler';
+    case 'cockerel':
+      return 'Cockerel';
+    case 'layer':
+      return 'Layer';
+    default:
+      return 'Dual purpose';
+  }
+}
+
+/**
  * TypeScript types that mirror the API responses documented in
  * docs/API_ENDPOINTS.md. Add new types here when you wire a new endpoint.
  */
@@ -152,7 +193,7 @@ export type TokenLedgerRow = {
 
 export type TokenPrice = {
   id: string;
-  token_type: 'broiler' | 'layer';
+  token_type: TokenType;
   tier: 'basic' | 'premium';
   unit_price_minor: number;
   currency: string;

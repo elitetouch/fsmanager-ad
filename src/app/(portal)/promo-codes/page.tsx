@@ -1,5 +1,7 @@
 'use client';
 
+import { TOKEN_TYPES, productionTypeLabel, type TokenType } from '@/types/api';
+
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -79,7 +81,7 @@ export default function PromoCodesPage() {
 function PromoForm({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState('');
   const [label, setLabel] = useState('');
-  const [tokenType, setTokenType] = useState<'broiler' | 'layer'>('broiler');
+  const [tokenType, setTokenType] = useState<TokenType>('broiler');
   const [tier, setTier] = useState<'basic' | 'premium'>('basic');
   const [quantity, setQuantity] = useState<number | ''>('');
   const [maxRedemptions, setMaxRedemptions] = useState<number | ''>('');
@@ -103,7 +105,7 @@ function PromoForm({ onDone }: { onDone: () => void }) {
     <form onSubmit={(e) => { e.preventDefault(); m.mutate(); }} className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2"><Label>Code (auto if blank)</Label><Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="FARMSUMMER25" className="font-mono" /></div>
       <div className="sm:col-span-2"><Label>Label / campaign name</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Summer 2026 launch" /></div>
-      <div><Label>Token type *</Label><select value={tokenType} onChange={(e) => setTokenType(e.target.value as 'broiler' | 'layer')} className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"><option value="broiler">Broiler</option><option value="layer">Layer</option></select></div>
+      <div><Label>Token type *</Label><select value={tokenType} onChange={(e) => setTokenType(e.target.value as TokenType)} className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm">{TOKEN_TYPES.map((t) => (<option key={t} value={t}>{productionTypeLabel(t)}</option>))}</select></div>
       <div><Label>Tier *</Label><select value={tier} onChange={(e) => setTier(e.target.value as 'basic' | 'premium')} className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"><option value="basic">Basic</option><option value="premium">Premium</option></select></div>
       <div><Label>Tokens per redemption *</Label><Input type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value === '' ? '' : Number(e.target.value))} required /></div>
       <div><Label>Max redemptions (∞ if blank)</Label><Input type="number" min={1} value={maxRedemptions} onChange={(e) => setMaxRedemptions(e.target.value === '' ? '' : Number(e.target.value))} /></div>

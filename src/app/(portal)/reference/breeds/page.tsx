@@ -1,5 +1,7 @@
 'use client';
 
+import { PRODUCTION_TYPES, productionTypeLabel } from '@/types/api';
+
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -70,9 +72,11 @@ export default function BreedsPage() {
             className="h-10 rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"
           >
             <option value="">Any production type</option>
-            <option value="broiler">Broiler</option>
-            <option value="layer">Layer</option>
-            <option value="dual_purpose">Dual purpose</option>
+            {PRODUCTION_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {productionTypeLabel(t)}
+              </option>
+            ))}
           </select>
           <Button type="submit" variant="secondary">Apply</Button>
         </form>
@@ -199,9 +203,11 @@ function BreedForm({ initial, onDone }: { initial?: BreedRow; onDone: () => void
         <Label>Production type *</Label>
         <select value={productionType} onChange={(e) => setProductionType(e.target.value as BreedRow['production_type'])}
           className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm">
-          <option value="broiler">Broiler</option>
-          <option value="layer">Layer</option>
-          <option value="dual_purpose">Dual purpose</option>
+          {PRODUCTION_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {productionTypeLabel(t)}
+            </option>
+          ))}
         </select>
       </div>
       <div><Label>Breeder company</Label><Input value={breeder} onChange={(e) => setBreeder(e.target.value)} /></div>

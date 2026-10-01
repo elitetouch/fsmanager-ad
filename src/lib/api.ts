@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { clearToken, readToken } from './auth';
 import * as fx from './fixtures';
+import type { ProductionType, TokenType } from '@/types/api';
 
 /**
  * When the app is built with NEXT_PUBLIC_DEMO_MODE=1, every endpoint
@@ -434,7 +435,7 @@ export const endpoints = {
       : apiData<{ rows: TokenLedgerRow[]; meta: Paginated['meta'] }>(api.get('/tokens/ledger', { params })),
   tokenAdjust: (payload: {
     account_id: string;
-    token_type: 'broiler' | 'layer';
+    token_type: TokenType;
     tier: 'basic' | 'premium';
     entry_type: 'credit' | 'debit';
     quantity: number;
@@ -451,7 +452,7 @@ export const endpoints = {
    */
   tokenManualPurchase: (payload: {
     account_id: string;
-    token_type: 'broiler' | 'layer';
+    token_type: TokenType;
     tier: 'basic' | 'premium';
     quantity: number;
     amount_minor: number;
@@ -474,7 +475,7 @@ export const endpoints = {
       ? wait({ rows: activeOnly ? fx.demoTokenPrices.filter((p) => p.is_active) : fx.demoTokenPrices })
       : apiData<{ rows: TokenPrice[] }>(api.get('/tokens/prices', { params: activeOnly ? { active_only: 1 } : {} })),
   createTokenPrice: (payload: {
-    token_type: 'broiler' | 'layer';
+    token_type: TokenType;
     tier: 'basic' | 'premium';
     unit_price_minor: number;
     currency?: string;
@@ -1219,7 +1220,7 @@ export type BreedRow = {
   id: string;
   name: string;
   slug: string;
-  production_type: 'broiler' | 'layer' | 'dual_purpose';
+  production_type: ProductionType;
   breeder_company?: string | null;
   country_of_origin?: string | null;
   description?: string | null;
@@ -1249,7 +1250,7 @@ export type ProtocolRow = {
   name: string;
   slug: string;
   country_code: string;
-  production_type: 'broiler' | 'layer' | 'dual_purpose';
+  production_type: ProductionType;
   production_system?: 'inorganic' | 'organic';
   description?: string | null;
   is_active: boolean;

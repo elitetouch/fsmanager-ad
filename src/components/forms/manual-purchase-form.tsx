@@ -1,5 +1,7 @@
 'use client';
 
+import { TOKEN_TYPES, productionTypeLabel, type TokenType } from '@/types/api';
+
 /**
  * Reusable form for recording an OFFLINE token purchase — bank transfer,
  * cash, USSD, POS.
@@ -46,7 +48,7 @@ export function ManualPurchaseForm({
   compact = false,
 }: Props) {
   const [accountId, setAccountId] = useState(presetAccountId ?? '');
-  const [tokenType, setTokenType] = useState<'broiler' | 'layer'>('broiler');
+  const [tokenType, setTokenType] = useState<TokenType>('broiler');
   const [tier, setTier] = useState<'basic' | 'premium'>('basic');
   const [quantity, setQuantity] = useState<number | ''>('');
   const [amountMajor, setAmountMajor] = useState<number | ''>('');
@@ -142,11 +144,14 @@ export function ManualPurchaseForm({
           <Label>Token type</Label>
           <select
             value={tokenType}
-            onChange={(e) => setTokenType(e.target.value as 'broiler' | 'layer')}
+            onChange={(e) => setTokenType(e.target.value as TokenType)}
             className="h-10 w-full rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"
           >
-            <option value="broiler">Broiler</option>
-            <option value="layer">Layer</option>
+            {TOKEN_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {productionTypeLabel(t)}
+              </option>
+            ))}
           </select>
         </div>
         <div>

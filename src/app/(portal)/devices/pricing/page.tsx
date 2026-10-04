@@ -14,7 +14,7 @@ import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Badge } from '@/components/ui/badge';
-import { endpoints } from '@/lib/api';
+import { apiErrorMessage, endpoints } from '@/lib/api';
 
 /**
  * PENKEEP pricing — two tables:
@@ -62,7 +62,7 @@ function CountryPricingSection() {
       qc.invalidateQueries({ queryKey: ['pen-device-pricing'] });
       setEditing(null);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not save pricing.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not save pricing.')),
   });
 
   return (
@@ -264,7 +264,7 @@ function InstallationFeesSection() {
       qc.invalidateQueries({ queryKey: ['pen-device-installation-fees'] });
       setAdding(false);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not save fee.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not save fee.')),
   });
 
   const remove = useMutation({
@@ -273,7 +273,7 @@ function InstallationFeesSection() {
       toast.success('Removed.');
       qc.invalidateQueries({ queryKey: ['pen-device-installation-fees'] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not remove.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not remove.')),
   });
 
   return (

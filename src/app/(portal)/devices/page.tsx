@@ -17,7 +17,7 @@ import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
-import { endpoints } from '@/lib/api';
+import { apiErrorMessage, endpoints } from '@/lib/api';
 
 /**
  * PENKEEP devices — fleet management for the super-admin.
@@ -187,7 +187,7 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
       qc.invalidateQueries({ queryKey: ['pen-devices'] });
       setAllocating(false);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not allocate.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not allocate.')),
   });
 
   const deactivate = useMutation({
@@ -199,7 +199,7 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
       qc.invalidateQueries({ queryKey: ['pen-devices'] });
       setConfirmDeactivate(false);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not deactivate.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not deactivate.')),
   });
 
   const activate = useMutation({
@@ -210,7 +210,7 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
         : 'Device reactivated. No active flock to re-arm.');
       qc.invalidateQueries({ queryKey: ['pen-devices'] });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not activate.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not activate.')),
   });
 
   const remove = useMutation({
@@ -220,7 +220,7 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
       qc.invalidateQueries({ queryKey: ['pen-devices'] });
       setConfirmDelete(false);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not remove device.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not remove device.')),
   });
 
   const resend = useMutation({
@@ -228,7 +228,7 @@ function DeviceRowComponent({ d }: { d: DeviceRow }) {
     onSuccess: (res) => toast[res.mqtt_published ? 'success' : 'warning'](
       res.mqtt_published ? 'Command sent.' : 'Could not reach the device.',
     ),
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not send.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not send.')),
   });
 
   return (
@@ -782,7 +782,7 @@ function RegisterDeviceDialog({
         : `Device already existed — record returned.`);
       onSuccess();
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Could not register device.'),
+    onError: (err) => toast.error(apiErrorMessage(err, 'Could not register device.')),
   });
 
   function submit(e: React.FormEvent) {

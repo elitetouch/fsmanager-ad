@@ -11,6 +11,7 @@ import type {
   AdminUser,
   AuditLogRow,
   DashboardSnapshot,
+  FarmVertical,
   SupportMessage,
   SupportThread,
   TenantFarm,
@@ -231,6 +232,22 @@ const FARM_NAMES = [
 const COUNTRIES = ['NG', 'GH', 'KE', 'SN', 'GH', 'KE', 'GH', 'KE', 'NG', 'SN', 'GH', 'NG'];
 const STATES = ['FCT', 'Enugu', 'Ashanti', 'Dakar', 'Nakuru', 'Conakry', 'Greater Accra', 'Kisumu', 'Oyo', 'Thiès', 'Central', 'Kano'];
 const TYPES = ['layer', 'broiler', 'mixed', 'breeder'];
+// Poultry-heavy, as the real platform is, but with the other verticals
+// present so the demo exercises the vertical column and filter.
+const DEMO_VERTICALS: FarmVertical[] = [
+  'poultry',
+  'poultry',
+  'poultry',
+  'greenhouse',
+  'poultry',
+  'cold_chain',
+  'poultry',
+  'greenhouse',
+  'poultry',
+  'aquaculture',
+  'poultry',
+  'irrigation',
+];
 
 export function demoFarms(): TenantFarm[] {
   return FARM_NAMES.map((name, i) => ({
@@ -244,6 +261,7 @@ export function demoFarms(): TenantFarm[] {
     address: null,
     timezone: 'Africa/Lagos',
     farmType: TYPES[i % TYPES.length],
+    vertical: DEMO_VERTICALS[i % DEMO_VERTICALS.length],
     primaryProduction: TYPES[i % TYPES.length],
     estimatedCapacity: 1000 + i * 1500,
     targetMarket: i % 2 === 0 ? 'wholesale' : 'retail',

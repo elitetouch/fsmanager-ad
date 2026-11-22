@@ -15,23 +15,29 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Pagination } from '@/components/ui/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { endpoints } from '@/lib/api';
+import { VERTICAL_LABELS, type FarmVertical } from '@/types/api';
 import { fmtInt } from '@/lib/format';
 
 export default function FarmsPage() {
   const [q, setQ] = useState('');
   const [country, setCountry] = useState('');
-  const [farmType, setFarmType] = useState('');
+  // `primary_production`, NOT `farm_type`. Two different columns: the
+  // tenant app writes production (broiler/layer/mixed) and never writes
+  // farm_type, so filtering on farm_type matched zero farms every time.
+  const [production, setProduction] = useState('');
+  const [vertical, setVertical] = useState('');
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const [page, setPage] = useState(1);
   const perPage = 25;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['farms', { q, country, farmType, status, page }],
+    queryKey: ['farms', { q, country, production, vertical, status, page }],
     queryFn: () =>
       endpoints.listFarms({
         q: q || undefined,
         country_code: country || undefined,
-        farm_type: farmType || undefined,
+        vertical: vertical || undefined,
+        primary_production: production || undefined,
         status,
         page,
         per_page: perPage,
@@ -47,7 +53,13 @@ export default function FarmsPage() {
         actions={
           <ExportButton
             resource="farms"
-            filters={{ q: q || undefined, country_code: country || undefined, farm_type: farmType || undefined, status }}
+            filters={{
+              q: q || undefined,
+              country_code: country || undefined,
+              vertical: vertical || undefined,
+              primary_production: production || undefined,
+              status,
+            }}
           />
         }
       />
@@ -76,15 +88,30 @@ export default function FarmsPage() {
             className="sm:w-32"
           />
           <select
-            value={farmType}
-            onChange={(e) => setFarmType(e.target.value)}
+            value={vertical}
+            onChange={(e) => setVertical(e.target.value)}
             className="h-10 rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"
           >
-            <option value="">Any farm type</option>
+            <option value="">Any vertical</option>
+            {(Object.keys(VERTICAL_LABELS) as FarmVertical[]).map((v) => (
+              <option key={v} value={v}>
+                {VERTICAL_LABELS[v]}
+              </option>
+            ))}
+          </select>
+          <select
+            value={production}
+            onChange={(e) => setProduction(e.target.value)}
+            className="h-10 rounded-[var(--radius-button)] border border-[var(--color-brand-border)] bg-white px-3 text-sm"
+          >
+            {/* Poultry-only, and only these three: the tenant app's type
+                is 'broiler' | 'layer' | 'mixed'. "Breeder" used to sit
+                here and could never match a row. Non-poultry farms are
+                reached through the vertical filter beside it. */}
+            <option value="">Any production</option>
             <option value="broiler">Broiler</option>
             <option value="layer">Layer</option>
             <option value="mixed">Mixed</option>
-            <option value="breeder">Breeder</option>
           </select>
           <select
             value={status}
@@ -115,9 +142,14 @@ export default function FarmsPage() {
               <TR>
                 <TH>Farm</TH>
                 <TH>Location</TH>
+                <TH>Vertical</TH>
                 <TH>Production</TH>
-                <TH>Active flocks</TH>
-                <TH>Current birds</TH>
+                {/* Vertical-neutral on purpose. These two columns sum the
+                    `flocks` table, which now also holds greenhouse crop
+                    cycles — "Current birds" over a row of tomatoes was a
+                    bird count with plants in it. */}
+                <TH>Active cycles</TH>
+                <TH>Current stock</TH>
                 <TH>Staff</TH>
                 <TH></TH>
               </TR>
@@ -147,6 +179,13 @@ export default function FarmsPage() {
                     {f.countryCode}
                     {f.state ? ` · ${f.state}` : ''}
                   </TD>
+                  <TD>
+                    <Badge tone={f.vertical === 'poultry' ? 'neutral' : 'info'}>
+                      {VERTICAL_LABELS[f.vertical] ?? f.vertical}
+                    </Badge>
+                  </TD>
+                  {/* Poultry-only field, so a dash here is correct for a
+                      greenhouse or cold chain farm, not missing data. */}
                   <TD className="capitalize">{f.primaryProduction ?? '—'}</TD>
                   <TD>{fmtInt(f.stats?.activeFlocksCount ?? 0)}</TD>
                   <TD className="font-medium">{fmtInt(f.stats?.currentBirds ?? 0)}</TD>

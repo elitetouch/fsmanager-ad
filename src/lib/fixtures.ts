@@ -11,6 +11,7 @@ import type {
   AdminUser,
   AuditLogRow,
   DashboardSnapshot,
+  FarmVertical,
   SupportMessage,
   SupportThread,
   TenantFarm,
@@ -231,6 +232,22 @@ const FARM_NAMES = [
 const COUNTRIES = ['NG', 'GH', 'KE', 'SN', 'GH', 'KE', 'GH', 'KE', 'NG', 'SN', 'GH', 'NG'];
 const STATES = ['FCT', 'Enugu', 'Ashanti', 'Dakar', 'Nakuru', 'Conakry', 'Greater Accra', 'Kisumu', 'Oyo', 'Thiès', 'Central', 'Kano'];
 const TYPES = ['layer', 'broiler', 'mixed', 'breeder'];
+// Poultry-heavy, as the real platform is, but with the other verticals
+// present so the demo exercises the vertical column and filter.
+const DEMO_VERTICALS: FarmVertical[] = [
+  'poultry',
+  'poultry',
+  'poultry',
+  'greenhouse',
+  'poultry',
+  'cold_chain',
+  'poultry',
+  'greenhouse',
+  'poultry',
+  'aquaculture',
+  'poultry',
+  'irrigation',
+];
 
 export function demoFarms(): TenantFarm[] {
   return FARM_NAMES.map((name, i) => ({
@@ -244,6 +261,7 @@ export function demoFarms(): TenantFarm[] {
     address: null,
     timezone: 'Africa/Lagos',
     farmType: TYPES[i % TYPES.length],
+    vertical: DEMO_VERTICALS[i % DEMO_VERTICALS.length],
     primaryProduction: TYPES[i % TYPES.length],
     estimatedCapacity: 1000 + i * 1500,
     targetMarket: i % 2 === 0 ? 'wholesale' : 'retail',
@@ -528,12 +546,16 @@ export const demoSegByState = {
   ],
 };
 
-export const demoFarmTypeSeg = {
+// Poultry-dominant, as the platform is. The cold chain row carries no
+// activity on purpose: cold rooms keep stock in `cold_chain_batches`,
+// which these flock-derived columns do not reach.
+export const demoVerticalSeg = {
   rows: [
-    { bucket: 'broiler', farms: 5402, currentBirds: 2400000, activeFlocks: 8412 },
-    { bucket: 'layer', farms: 4012, currentBirds: 1480000, activeFlocks: 6210 },
-    { bucket: 'mixed', farms: 1404, currentBirds: 220000, activeFlocks: 2401 },
-    { bucket: 'breeder', farms: 682, currentBirds: 103189, activeFlocks: 1186 },
+    { bucket: 'poultry', farms: 10818, currentBirds: 4100000, activeFlocks: 17023 },
+    { bucket: 'greenhouse', farms: 486, currentBirds: 198400, activeFlocks: 712 },
+    { bucket: 'irrigation', farms: 121, currentBirds: 0, activeFlocks: 0 },
+    { bucket: 'cold_chain', farms: 58, currentBirds: 0, activeFlocks: 0 },
+    { bucket: 'aquaculture', farms: 17, currentBirds: 24300, activeFlocks: 29 },
   ],
 };
 

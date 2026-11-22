@@ -25,7 +25,7 @@ export default function SegmentationPage() {
         <TabsList className="flex flex-wrap">
           <TabsTrigger value="country">By country</TabsTrigger>
           <TabsTrigger value="state">By state</TabsTrigger>
-          <TabsTrigger value="farm-type">By farm type</TabsTrigger>
+          <TabsTrigger value="vertical">By vertical</TabsTrigger>
           <TabsTrigger value="production">By primary production</TabsTrigger>
           <TabsTrigger value="market">By target market</TabsTrigger>
           <TabsTrigger value="flocks">Flocks by production</TabsTrigger>
@@ -39,8 +39,12 @@ export default function SegmentationPage() {
         <TabsContent value="state">
           <ByState />
         </TabsContent>
-        <TabsContent value="farm-type">
-          <Generic title="Farm type" loader={endpoints.segByFarmType} xKey="bucket" yKey="farms" />
+        {/* Was "By farm type", which grouped on `farm_type` — free text
+            the tenant app never writes, so the chart was a single bar
+            labelled null holding every farm on the platform. Vertical is
+            NOT NULL with a default, so its buckets partition the farms. */}
+        <TabsContent value="vertical">
+          <Generic title="Vertical" loader={endpoints.segByVertical} xKey="bucket" yKey="farms" />
         </TabsContent>
         <TabsContent value="production">
           <Generic title="Primary production" loader={endpoints.segByPrimaryProduction} xKey="bucket" yKey="farms" />

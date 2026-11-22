@@ -46,6 +46,26 @@ export function productionTypeLabel(t: ProductionType | TokenType): string {
 
 import type { AdminRole } from '@/lib/permissions-catalog';
 
+/**
+ * Mirrors App\Domain\Verticals\FarmVertical::VERTICALS. The tenant app
+ * picks one at signup and it is the only farm dimension that covers the
+ * whole platform — `primaryProduction` beside it is poultry-only.
+ */
+export type FarmVertical =
+  | 'poultry'
+  | 'greenhouse'
+  | 'irrigation'
+  | 'cold_chain'
+  | 'aquaculture';
+
+export const VERTICAL_LABELS: Record<FarmVertical, string> = {
+  poultry: 'Poultry',
+  greenhouse: 'Greenhouse',
+  irrigation: 'Irrigation',
+  cold_chain: 'Cold chain',
+  aquaculture: 'Aquaculture',
+};
+
 export type Paginated<T = unknown> = {
   rows?: T[];
   meta: {
@@ -99,6 +119,9 @@ export type TenantFarm = {
   address: string | null;
   timezone: string;
   farmType: string | null;
+  /** NOT NULL on the backend with a 'poultry' default — every farm has one. */
+  vertical: FarmVertical;
+  /** Poultry only. Null on greenhouse, cold chain, irrigation, aquaculture. */
   primaryProduction: string | null;
   estimatedCapacity: number | null;
   targetMarket: string | null;

@@ -320,8 +320,8 @@ export const endpoints = {
       : apiData<{ countryCode: string | null; rows: SegRow[] }>(
           api.get('/segmentation/by-state', { params: country ? { country } : {} }),
         ),
-  segByFarmType: () =>
-    DEMO ? wait(fx.demoFarmTypeSeg) : apiData<{ rows: SegRow[] }>(api.get('/segmentation/by-farm-type')),
+  segByVertical: () =>
+    DEMO ? wait(fx.demoVerticalSeg) : apiData<{ rows: SegRow[] }>(api.get('/segmentation/by-vertical')),
   segByPrimaryProduction: () =>
     DEMO ? wait(fx.demoProductionSeg) : apiData<{ rows: SegRow[] }>(api.get('/segmentation/by-primary-production')),
   segByTargetMarket: () =>

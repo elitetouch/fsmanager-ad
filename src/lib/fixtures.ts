@@ -546,12 +546,16 @@ export const demoSegByState = {
   ],
 };
 
-export const demoFarmTypeSeg = {
+// Poultry-dominant, as the platform is. The cold chain row carries no
+// activity on purpose: cold rooms keep stock in `cold_chain_batches`,
+// which these flock-derived columns do not reach.
+export const demoVerticalSeg = {
   rows: [
-    { bucket: 'broiler', farms: 5402, currentBirds: 2400000, activeFlocks: 8412 },
-    { bucket: 'layer', farms: 4012, currentBirds: 1480000, activeFlocks: 6210 },
-    { bucket: 'mixed', farms: 1404, currentBirds: 220000, activeFlocks: 2401 },
-    { bucket: 'breeder', farms: 682, currentBirds: 103189, activeFlocks: 1186 },
+    { bucket: 'poultry', farms: 10818, currentBirds: 4100000, activeFlocks: 17023 },
+    { bucket: 'greenhouse', farms: 486, currentBirds: 198400, activeFlocks: 712 },
+    { bucket: 'irrigation', farms: 121, currentBirds: 0, activeFlocks: 0 },
+    { bucket: 'cold_chain', farms: 58, currentBirds: 0, activeFlocks: 0 },
+    { bucket: 'aquaculture', farms: 17, currentBirds: 24300, activeFlocks: 29 },
   ],
 };
 
